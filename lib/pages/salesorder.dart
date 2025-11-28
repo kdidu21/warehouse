@@ -98,6 +98,15 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
     }
   }
 
+  // Method to remove a booking from the list
+  void _forceRefresh() {
+    setState(() {
+      _bookingStates.clear(); // Clear all states to force a full refresh
+      _loading = true; // Show loading indicator
+    });
+    _fetchData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,7 +166,17 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
               itemCount: _bookings.length,
               itemBuilder: (context, index) {
                 final booking = _bookings[index];
-                return _BookingCard(booking: booking, dateFormat: _dateFormat);
+                return _BookingCard(
+                  booking: booking,
+                  dateFormat: _dateFormat,
+                  onRefresh: (){
+                    setState(() {
+                      _bookings.removeAt( index);
+                    });
+                    //_fetchData();
+                  }
+                  //_forceRefresh,
+                );
               },
             ),
     );
@@ -167,8 +186,13 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
 class _BookingCard extends StatefulWidget {
   final salesorder booking;
   final DateFormat dateFormat;
+  final VoidCallback onRefresh;
 
-  const _BookingCard({required this.booking, required this.dateFormat});
+  const _BookingCard({
+    required this.booking,
+    required this.dateFormat,
+    required this.onRefresh,
+  });
 
   @override
   State<_BookingCard> createState() => _BookingCardState();
@@ -728,7 +752,7 @@ class _BookingCardState extends State<_BookingCard> {
                       Row(
                         children: [
                           Radio<String>(
-                            value: 'Double-Book',
+                            value: 'Double-Booking',
                             groupValue: null,
                             onChanged: (value) {
                               if (value != null) {
@@ -737,28 +761,16 @@ class _BookingCardState extends State<_BookingCard> {
                             },
                             activeColor: Colors.purple,
                           ),
-                          const Text('Double-Book', style: TextStyle(fontSize: 11)),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Radio<String>(
-                            value: 'Discounting',
-                            groupValue: null,
-                            onChanged: (value) {
-                              if (value != null) {
-                                _showPreparedByDialog(context, booking, value);
-                              }
-                            },
-                            activeColor: Colors.blue,
+                          const Text(
+                            'Double-Booking',
+                            style: TextStyle(fontSize: 11),
                           ),
-                          const Text('Discounting', style: TextStyle(fontSize: 11)),
                         ],
                       ),
                       Row(
                         children: [
                           Radio<String>(
-                            value: 'Out of Stock',
+                            value: 'Out of Stocks',
                             groupValue: null,
                             onChanged: (value) {
                               if (value != null) {
@@ -767,7 +779,10 @@ class _BookingCardState extends State<_BookingCard> {
                             },
                             activeColor: Colors.red,
                           ),
-                          const Text('Out of Stock', style: TextStyle(fontSize: 11)),
+                          const Text(
+                            'Out of Stocks',
+                            style: TextStyle(fontSize: 11),
+                          ),
                         ],
                       ),
                     ],
@@ -797,7 +812,7 @@ class _BookingCardState extends State<_BookingCard> {
                         return StatefulBuilder(
                           builder: (context, setDialogState) {
                             return AlertDialog(
-                              title: const Text('Prepared by'),
+                              title: Text('Prepared by'),
                               content: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -859,6 +874,7 @@ class _BookingCardState extends State<_BookingCard> {
                                           );
 
                                           try {
+                                            widget.onRefresh();
                                             // Close loading indicator
                                             if (currentContext.mounted) {
                                               Navigator.pop(currentContext);
@@ -870,9 +886,9 @@ class _BookingCardState extends State<_BookingCard> {
                                                   booking,
                                                   selectedPerson!,
                                                 );
-
                                             // Show result
                                             if (success) {
+                                              widget.onRefresh();
                                               if (currentContext.mounted) {
                                                 ScaffoldMessenger.of(
                                                   currentContext,
@@ -948,11 +964,12 @@ class _BookingCardState extends State<_BookingCard> {
       context: context,
       builder: (context) {
         String? selectedPerson;
+        final currentStatus = status; // Capture status variable
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Prepared by'),
+              title: Text('Prepared by - $currentStatus'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1010,30 +1027,40 @@ class _BookingCardState extends State<_BookingCard> {
 
                           try {
                             if (currentContext.mounted) {
-                                  Navigator.pop(currentContext);
-                                }
+                              Navigator.pop(currentContext);
+                            }
+                            String so = booking.Sono;
+                            String st = status;
+                            String sp = selectedPerson!;
+                            String url =
+                                'http://shopapi.vaxilifecorp.com/api/appsales?sono=${so}_${st}_${sp}';
 
                             // Call API to update status
-                            final response = await http.get(
-                              Uri.parse(
-                                'http://shopapi.vaxilifecorp.com/api/updatestatus/${booking.Sono}/$status/$selectedPerson',
-                              ),
-                            );
+                            final response = await http.get(Uri.parse(url));
 
                             if (response.statusCode == 200) {
-                              if (currentContext.mounted) {
-                                ScaffoldMessenger.of(
-                                  currentContext,
-                                ).showSnackBar(
+                              widget.onRefresh();
+                            if (currentContext.mounted) {
+                              ScaffoldMessenger.of(
+                                currentContext,
+                              ).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      'Order ${booking.Sono} marked as $status by $selectedPerson',
-                                    ),
+                                      'Order ${booking.Sono} marked as $currentStatus by $selectedPerson',
+                                     ),
                                     backgroundColor: Colors.green,
                                   ),
-                                );
-                              }
-                            } else {
+                              );
+
+                            
+
+                              
+                              // Wait a moment then refresh
+                              // Future.delayed(const Duration(milliseconds: 500), () {
+                              //   widget.onRefresh();
+                              // });
+                            }
+                          } else {
                               if (currentContext.mounted) {
                                 ScaffoldMessenger.of(
                                   currentContext,

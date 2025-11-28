@@ -24,6 +24,7 @@ class SalesOrderService {
           'BatchNo': item.BatchNo ?? '',
           'WarehouseMan': selectedWarehouseman,
           'SecondExpire': item.DateExpire2 ?? '',
+          'Status': "Discounting",
         });
       }
 
