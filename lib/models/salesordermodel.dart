@@ -1,4 +1,4 @@
-class  salesorder {
+class salesorder {
   final String Sono;
   final String ClinicName;
   final DateTime? DateOrder;
@@ -17,16 +17,17 @@ class  salesorder {
 
   factory salesorder.fromJson(Map<String, dynamic> json) {
     return salesorder(
-      Sono: json['Sono'],
-      ClinicName: json['ClinicName'],
+      Sono: json['Sono'] ?? '',
+      ClinicName: json['ClinicName'] ?? '',
       DateOrder: json['DateOrder'] != null
-          ? DateTime.parse(json['DateOrder'])
+          ? DateTime.tryParse(json['DateOrder'])
           : null,
-      AreaName: json['AreaName'],
+      AreaName: json['AreaName'] ?? '',
       Remarks: json['Remarks'] ?? '',
-      items: (json['Items'] as List)
-          .map((i) => salesorderdetails.fromJson(i))
-          .toList(),
+      items: (json['Items'] as List<dynamic>?)
+              ?.map((i) => salesorderdetails.fromJson(i))
+              .toList() ??
+          [],
     );
   }
 }
@@ -35,55 +36,67 @@ class salesorderdetails {
   int id;
   String ItemCode;
   int Quantity;
-  String UnitOfMeasure;
+  String UnitOfMeasure; // non-nullable
   int PreparedQuantity;
   String DateExpire;
   String? BatchNo;
   String? DateExpire2;
+  String? WarehouseMan;
 
   salesorderdetails({
     required this.id,
     required this.ItemCode,
     required this.Quantity,
-    required this.UnitOfMeasure,
+    this.UnitOfMeasure = '',
     required this.PreparedQuantity,
     required this.DateExpire,
     this.BatchNo,
     this.DateExpire2,
+    this.WarehouseMan,
   });
 
   factory salesorderdetails.fromJson(Map<String, dynamic> json) {
+    String formatDate(String? date) {
+      if (date == null) return 'N/A';
+      try {
+        final dt = DateTime.parse(date);
+        return '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
+      } catch (_) {
+        return 'N/A';
+      }
+    }
+
     return salesorderdetails(
-      id: json['id'],
-      ItemCode: json['ItemCode'],
-      Quantity: json['Quantity'],
-      UnitOfMeasure: json['UnitOfMeasure'],
+      id: json['id'] ?? 0,
+      ItemCode: json['ItemCode'] ?? '',
+      Quantity: json['Quantity'] ?? 0,
+      UnitOfMeasure: json['UnitOfMeasure']?.toString() ?? '',
       PreparedQuantity: json['PreparedQuantity'] ?? 0,
-      DateExpire: json['DateExpire'] != null
-          ? () {
-              final dt = DateTime.parse(json['DateExpire']);
-              return '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
-            }()
-          : 'N/A',
+      DateExpire: formatDate(json['DateExpire']),
       BatchNo: json['BatchNo'],
       DateExpire2: json['SecondExpire'],
+      WarehouseMan: json['WarehouseMan'],
     );
   }
+
   salesorderdetails copyWith({
     int? PreparedQuantity,
     String? DateExpire,
     String? BatchNo,
     String? DateExpire2,
+    String? UnitOfMeasure,
+    String? WarehouseMan,
   }) {
     return salesorderdetails(
       id: id,
       ItemCode: ItemCode,
       Quantity: Quantity,
-      UnitOfMeasure: UnitOfMeasure,
+      UnitOfMeasure: UnitOfMeasure ?? this.UnitOfMeasure,
       PreparedQuantity: PreparedQuantity ?? this.PreparedQuantity,
       DateExpire: DateExpire ?? this.DateExpire,
       BatchNo: BatchNo ?? this.BatchNo,
       DateExpire2: DateExpire2 ?? this.DateExpire2,
+      WarehouseMan: WarehouseMan ?? this.WarehouseMan,
     );
   }
 }

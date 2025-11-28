@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:vaxiwarehouse/models/salesordermodel.dart';
 import 'package:vaxiwarehouse/utils/getData.dart';
 import 'package:vaxiwarehouse/utils/printhelper.dart';
-
+import 'package:vaxiwarehouse/services/sales_order_service.dart';
 
 class ClinicBookingsPage extends StatefulWidget {
   const ClinicBookingsPage({super.key});
@@ -172,6 +172,15 @@ class _BookingCard extends StatefulWidget {
   State<_BookingCard> createState() => _BookingCardState();
 }
 
+String safeDecode(String? input) {
+  if (input == null || input.isEmpty) return '';
+  try {
+    return Uri.decodeComponent(input);
+  } catch (_) {
+    return input;
+  }
+}
+
 class _BookingCardState extends State<_BookingCard> {
   bool expanded = false;
 
@@ -202,7 +211,7 @@ class _BookingCardState extends State<_BookingCard> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
-                color: Color.fromRGBO(221, 214, 155,100),
+                color: Color.fromRGBO(221, 214, 155, 100),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Row(
@@ -215,7 +224,7 @@ class _BookingCardState extends State<_BookingCard> {
                         Text(
                           booking.ClinicName,
                           style: const TextStyle(
-                            color: Color.fromRGBO(0, 63, 119,85),
+                            color: Color.fromRGBO(0, 63, 119, 85),
                             fontWeight: FontWeight.bold,
                             fontSize: 22,
                           ),
@@ -232,13 +241,13 @@ class _BookingCardState extends State<_BookingCard> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          Uri.decodeComponent(booking.Remarks ?? ''),
+                          safeDecode(booking.Remarks),
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
-                          overflow: TextOverflow.ellipsis,
+                          // Remove overflow: TextOverflow.ellipsis to allow wrapping
                         ),
                       ],
                     ),
@@ -281,34 +290,61 @@ class _BookingCardState extends State<_BookingCard> {
                       showDialog(
                         context: context,
                         builder: (context) {
-                          final batchController = TextEditingController(text: item.BatchNo ?? 'N/A');
-                          final qtyController = TextEditingController(text: item.PreparedQuantity.toString());
+                          final batchController = TextEditingController(
+                            text:
+                                (item.BatchNo == null ||
+                                    item.BatchNo!.isEmpty ||
+                                    item.BatchNo == 'N/A')
+                                ? ''
+                                : item.BatchNo!,
+                          );
+                          final qtyController = TextEditingController(
+                            text: item.PreparedQuantity > 0
+                                ? item.PreparedQuantity.toString()
+                                : '',
+                          );
                           DateTime? exp1;
                           DateTime? exp2;
 
-                          if (item.DateExpire.isNotEmpty) {
+                          // In the dialog where you parse the dates:
+                          if (item.DateExpire.isNotEmpty &&
+                              item.DateExpire != 'N/A') {
                             try {
                               final parts = item.DateExpire.split('-');
-                              exp1 = DateTime(
-                                int.parse(parts[0]),
-                                int.parse(parts[1]),
-                                1,
+                              // ✅ FIXED: parts[0] is YEAR, parts[1] is MONTH (input is YYYY-MM)
+                              if (parts.length == 2) {
+                                exp1 = DateTime(
+                                  int.parse(parts[0]), // year (first part)
+                                  int.parse(parts[1]), // month (second part)
+                                  1,
+                                );
+                              }
+                            } catch (_) {
+                              print(
+                                'Error parsing DateExpire: ${item.DateExpire}',
                               );
-                            } catch (_) {}
+                            }
                           }
 
-                          if (item.DateExpire2 != null && item.DateExpire2!.isNotEmpty) {
+                          if (item.DateExpire2 != null &&
+                              item.DateExpire2!.isNotEmpty &&
+                              item.DateExpire2 != 'N/A') {
                             try {
-                              final parts = item.DateExpire2?.split('-');
-                              exp2 = DateTime(
-                                int.parse(parts![0]),
-                                int.parse(parts[1]),
-                                1,
+                              final parts = item.DateExpire2!.split('-');
+                              // ✅ FIXED: parts[0] is YEAR, parts[1] is MONTH (input is YYYY-MM)
+                              if (parts.length == 2) {
+                                exp2 = DateTime(
+                                  int.parse(parts[0]), // year (first part)
+                                  int.parse(parts[1]), // month (second part)
+                                  1,
+                                );
+                              }
+                            } catch (_) {
+                              print(
+                                'Error parsing DateExpire2: ${item.DateExpire2}',
                               );
-                            } catch (_) {}
+                            }
                           }
-
-
                           // capture parent setState
                           final parentSetState = setState;
 
@@ -316,7 +352,9 @@ class _BookingCardState extends State<_BookingCard> {
                             builder: (context, localSetState) {
                               Future<void> pickYearMonth(bool first) async {
                                 final now = DateTime.now();
-                                DateTime tempDate = first ? (exp1 ?? now) : (exp2 ?? now);
+                                DateTime tempDate = first
+                                    ? (exp1 ?? now)
+                                    : (exp2 ?? now);
 
                                 await showDialog(
                                   context: context,
@@ -324,26 +362,37 @@ class _BookingCardState extends State<_BookingCard> {
                                     int selectedYear = tempDate.year;
                                     int selectedMonth = tempDate.month;
 
-                                    // ✅ Add StatefulBuilder here
+                                    // ✅ Generate year range that includes selectedYear
+                                    final minYear = selectedYear < now.year - 5
+                                        ? selectedYear
+                                        : now.year - 5;
+                                    final maxYear = selectedYear > now.year + 4
+                                        ? selectedYear
+                                        : now.year + 4;
+                                    final yearRange = maxYear - minYear + 1;
+
                                     return StatefulBuilder(
                                       builder: (context, setDialogState) {
                                         return AlertDialog(
-                                          title: const Text('Select Year and Month'),
+                                          title: const Text(
+                                            'Select Year and Month',
+                                          ),
                                           content: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               DropdownButton<int>(
                                                 value: selectedYear,
                                                 items: List.generate(
-                                                  10,
+                                                  yearRange,
                                                   (i) => DropdownMenuItem(
-                                                    value: now.year - 5 + i,
-                                                    child: Text('${now.year - 5 + i}'),
+                                                    value: minYear + i,
+                                                    child: Text(
+                                                      '${minYear + i}',
+                                                    ),
                                                   ),
                                                 ),
                                                 onChanged: (v) {
                                                   if (v != null) {
-                                                    // ✅ Update state inside dialog
                                                     setDialogState(() {
                                                       selectedYear = v;
                                                     });
@@ -356,12 +405,16 @@ class _BookingCardState extends State<_BookingCard> {
                                                   12,
                                                   (i) => DropdownMenuItem(
                                                     value: i + 1,
-                                                    child: Text('${i + 1}'.padLeft(2, '0')),
+                                                    child: Text(
+                                                      '${i + 1}'.padLeft(
+                                                        2,
+                                                        '0',
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
                                                 onChanged: (v) {
                                                   if (v != null) {
-                                                    // ✅ Update state inside dialog
                                                     setDialogState(() {
                                                       selectedMonth = v;
                                                     });
@@ -372,7 +425,8 @@ class _BookingCardState extends State<_BookingCard> {
                                           ),
                                           actions: [
                                             TextButton(
-                                              onPressed: () => Navigator.pop(context),
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
                                               child: const Text('Cancel'),
                                             ),
                                             ElevatedButton(
@@ -550,7 +604,6 @@ class _BookingCardState extends State<_BookingCard> {
                       );
                     },
 
-
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         vertical: 8,
@@ -586,9 +639,10 @@ class _BookingCardState extends State<_BookingCard> {
                               ),
                             ),
                           ),
-                          
+
                           Text(
-                            (item.DateExpire.isEmpty || item.DateExpire == 'N/A')
+                            (item.DateExpire.isEmpty ||
+                                    item.DateExpire == 'N/A')
                                 ? 'No Expiration'
                                 : item.DateExpire ?? 'No Expiration',
                             style: const TextStyle(
@@ -596,18 +650,17 @@ class _BookingCardState extends State<_BookingCard> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          
+
                           const SizedBox(width: 16),
                           Text(
-                              (item.BatchNo == null || item.BatchNo!.isEmpty)
-                                  ? 'No Batch'
-                                  : item.BatchNo!,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            (item.BatchNo == null || item.BatchNo!.isEmpty)
+                                ? 'No Batch'
+                                : item.BatchNo!,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
                             ),
-                          
+                          ),
 
                           const SizedBox(width: 16),
                           Text(
@@ -620,7 +673,10 @@ class _BookingCardState extends State<_BookingCard> {
                           const SizedBox(width: 15),
                           Text(
                             item.UnitOfMeasure,
-                            style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(width: 25),
                           Text(
@@ -662,7 +718,140 @@ class _BookingCardState extends State<_BookingCard> {
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
                   onPressed: () {
-                    debugPrint('Submit clicked for ${booking.Sono}');
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        String? selectedPerson;
+
+                        return StatefulBuilder(
+                          builder: (context, setDialogState) {
+                            return AlertDialog(
+                              title: const Text('Prepared by'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  RadioListTile<String>(
+                                    title: const Text('Fe'),
+                                    value: 'Fe',
+                                    groupValue: selectedPerson,
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        selectedPerson = value;
+                                      });
+                                    },
+                                  ),
+                                  RadioListTile<String>(
+                                    title: const Text('Edrin'),
+                                    value: 'Edrin',
+                                    groupValue: selectedPerson,
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        selectedPerson = value;
+                                      });
+                                    },
+                                  ),
+                                  RadioListTile<String>(
+                                    title: const Text('Anne'),
+                                    value: 'Anne',
+                                    groupValue: selectedPerson,
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        selectedPerson = value;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: selectedPerson == null
+                                      ? null
+                                      : () async {
+                                          // Store context before async operations
+                                          final currentContext = context;
+
+                                          // Close the person selection dialog
+                                          Navigator.pop(currentContext);
+
+                                          // Show loading indicator
+                                          showDialog(
+                                            context: currentContext,
+                                            barrierDismissible: false,
+                                            builder: (context) => const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                          );
+
+                                          try {
+                                            // Close loading indicator
+                                            if (currentContext.mounted) {
+                                              Navigator.pop(currentContext);
+                                            }
+
+                                            // Submit the order
+                                            final success =
+                                                await SalesOrderService.submitSalesOrder(
+                                                  booking,
+                                                  selectedPerson!,
+                                                );
+
+                                            // Show result
+                                            if (success) {
+                                              if (currentContext.mounted) {
+                                                ScaffoldMessenger.of(
+                                                  currentContext,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Order ${booking.Sono} submitted by $selectedPerson',
+                                                    ),
+                                                    backgroundColor:
+                                                        Colors.green,
+                                                  ),
+                                                );
+                                              }
+                                            } else {
+                                              if (currentContext.mounted) {
+                                                ScaffoldMessenger.of(
+                                                  currentContext,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Failed to submit order. Please try again.',
+                                                    ),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          } catch (e) {
+                                            // Close loading indicator on error
+                                            if (currentContext.mounted) {
+                                              Navigator.pop(currentContext);
+                                              ScaffoldMessenger.of(
+                                                currentContext,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Error: $e'),
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        },
+                                  child: const Text('Submit'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    );
                   },
                   icon: const Icon(Icons.send, size: 18),
                   label: const Text('Submit'),
@@ -823,8 +1012,6 @@ class _BookingCardState extends State<_BookingCard> {
   //   ); // your printer must support image printing
   // }
 
-
-
   Future<void> printSalesOrderTemplateESCUtils(salesorder booking) async {
     final profile = await CapabilityProfile.load(); // auto-detect printer
     final generator = Generator(PaperSize.mm58, profile); // XP-58IIH is 58mm
@@ -859,7 +1046,7 @@ class _BookingCardState extends State<_BookingCard> {
     // --- Items (small font) ---
     bytes += generator.row([
       PosColumn(text: 'Item', width: 7),
-      PosColumn(text: 'Qty', width: 2, styles: PosStyles(bold: false),),
+      PosColumn(text: 'Qty', width: 2, styles: PosStyles(bold: false)),
       PosColumn(text: 'Exp', width: 3),
     ]);
     const int itemWidth = 17; // max characters for Item column
