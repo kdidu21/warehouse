@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:esc_pos_utils/esc_pos_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'dart:convert';
 
 import 'package:vaxiwarehouse/models/salesordermodel.dart';
 import 'package:vaxiwarehouse/utils/getData.dart';
@@ -702,8 +704,77 @@ class _BookingCardState extends State<_BookingCard> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Left side - Status Radio Buttons
+                Expanded(
+                  child: Row(
+                    children: [
+                      Row(
+                        children: [
+                          Radio<String>(
+                            value: 'On-Hold',
+                            groupValue: null,
+                            onChanged: (value) {
+                              if (value != null) {
+                                _showPreparedByDialog(context, booking, value);
+                              }
+                            },
+                            activeColor: Colors.amber,
+                          ),
+                          const Text('On-Hold', style: TextStyle(fontSize: 11)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Radio<String>(
+                            value: 'Double-Book',
+                            groupValue: null,
+                            onChanged: (value) {
+                              if (value != null) {
+                                _showPreparedByDialog(context, booking, value);
+                              }
+                            },
+                            activeColor: Colors.purple,
+                          ),
+                          const Text('Double-Book', style: TextStyle(fontSize: 11)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Radio<String>(
+                            value: 'Discounting',
+                            groupValue: null,
+                            onChanged: (value) {
+                              if (value != null) {
+                                _showPreparedByDialog(context, booking, value);
+                              }
+                            },
+                            activeColor: Colors.blue,
+                          ),
+                          const Text('Discounting', style: TextStyle(fontSize: 11)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Radio<String>(
+                            value: 'Out of Stock',
+                            groupValue: null,
+                            onChanged: (value) {
+                              if (value != null) {
+                                _showPreparedByDialog(context, booking, value);
+                              }
+                            },
+                            activeColor: Colors.red,
+                          ),
+                          const Text('Out of Stock', style: TextStyle(fontSize: 11)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Right side - Print and Submit buttons
                 ElevatedButton.icon(
                   onPressed: () async {
                     await printSalesOrderTemplateESCUtils(booking);
@@ -868,6 +939,136 @@ class _BookingCardState extends State<_BookingCard> {
     );
   }
 
+  void _showPreparedByDialog(
+    BuildContext context,
+    salesorder booking,
+    String status,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        String? selectedPerson;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Prepared by'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<String>(
+                    title: const Text('Fe'),
+                    value: 'Fe',
+                    groupValue: selectedPerson,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedPerson = value;
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('Edrin'),
+                    value: 'Edrin',
+                    groupValue: selectedPerson,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedPerson = value;
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('Anne'),
+                    value: 'Anne',
+                    groupValue: selectedPerson,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedPerson = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: selectedPerson == null
+                      ? null
+                      : () async {
+                          final currentContext = context;
+                          Navigator.pop(currentContext);
+
+                          showDialog(
+                            context: currentContext,
+                            barrierDismissible: false,
+                            builder: (context) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+
+                          try {
+                            if (currentContext.mounted) {
+                                  Navigator.pop(currentContext);
+                                }
+
+                            // Call API to update status
+                            final response = await http.get(
+                              Uri.parse(
+                                'http://shopapi.vaxilifecorp.com/api/updatestatus/${booking.Sono}/$status/$selectedPerson',
+                              ),
+                            );
+
+                            if (response.statusCode == 200) {
+                              if (currentContext.mounted) {
+                                ScaffoldMessenger.of(
+                                  currentContext,
+                                ).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Order ${booking.Sono} marked as $status by $selectedPerson',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } else {
+                              if (currentContext.mounted) {
+                                ScaffoldMessenger.of(
+                                  currentContext,
+                                ).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Failed to update status. Please try again.',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (currentContext.mounted) {
+                              Navigator.pop(currentContext);
+                              ScaffoldMessenger.of(currentContext).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  child: const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> printSalesOrderTemplate(salesorder booking) async {
     final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
 
@@ -930,87 +1131,6 @@ class _BookingCardState extends State<_BookingCard> {
       );
     }
   }
-
-  // Future<void> printSalesOrderTemplatePDF(salesorder booking) async {
-  //   final pdf = pw.Document();
-  //   final dateFormat = DateFormat('MMM dd, yyyy');
-
-  //   pdf.addPage(
-  //     pw.Page(
-  //       pageFormat: PdfPageFormat(58 * 2.8346, double.infinity), // 58mm width
-  //       build: (context) {
-  //         return pw.Column(
-  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
-  //           children: [
-  //             pw.Text(
-  //               'VAXI WAREHOUSE',
-  //               style: pw.TextStyle(
-  //                 fontSize: 8,
-  //                 fontWeight: pw.FontWeight.bold,
-  //               ),
-  //             ),
-  //             pw.SizedBox(height: 2),
-  //             pw.Text(
-  //               'Order No: ${booking.Sono}',
-  //               style: pw.TextStyle(fontSize: 6),
-  //             ),
-  //             pw.Text(
-  //               'Clinic: ${booking.ClinicName}',
-  //               style: pw.TextStyle(fontSize: 6),
-  //             ),
-  //             pw.Text(
-  //               'Area: ${booking.AreaName}',
-  //               style: pw.TextStyle(fontSize: 6),
-  //             ),
-  //             pw.Text(
-  //               'Date: ${dateFormat.format(booking.DateOrder ?? DateTime.now())}',
-  //               style: pw.TextStyle(fontSize: 6),
-  //             ),
-  //             pw.Divider(),
-  //             pw.Row(
-  //               children: [
-  //                 pw.Expanded(
-  //                   child: pw.Text('Item', style: pw.TextStyle(fontSize: 6)),
-  //                 ),
-  //                 pw.Text('Qty', style: pw.TextStyle(fontSize: 6)),
-  //                 pw.SizedBox(width: 10),
-  //                 pw.Text('Exp', style: pw.TextStyle(fontSize: 6)),
-  //               ],
-  //             ),
-  //             pw.Divider(),
-  //             for (var item in booking.items)
-  //               pw.Row(
-  //                 children: [
-  //                   pw.Expanded(
-  //                     child: pw.Text(
-  //                       item.ItemCode,
-  //                       style: pw.TextStyle(fontSize: 6),
-  //                     ),
-  //                   ),
-  //                   pw.Text(
-  //                     '${item.Quantity}',
-  //                     style: pw.TextStyle(fontSize: 6),
-  //                   ),
-  //                   pw.SizedBox(width: 10),
-  //                   pw.Text(item.DateExpire, style: pw.TextStyle(fontSize: 6)),
-  //                 ],
-  //               ),
-  //             pw.Divider(),
-  //             pw.Center(
-  //               child: pw.Text('THANK YOU!', style: pw.TextStyle(fontSize: 8)),
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     ),
-  //   );
-
-  //   // Convert to image
-  //   final Uint8List bytes = await pdf.save();
-  //   await PrinterHelper.printBytes(
-  //     bytes,
-  //   ); // your printer must support image printing
-  // }
 
   Future<void> printSalesOrderTemplateESCUtils(salesorder booking) async {
     final profile = await CapabilityProfile.load(); // auto-detect printer
