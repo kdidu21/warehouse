@@ -1947,6 +1947,7 @@ Container(
     );
   }
 }
+}
 
 String safeDecode(String? input) {
   if (input == null || input.isEmpty) return '';
