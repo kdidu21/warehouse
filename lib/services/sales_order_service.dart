@@ -24,7 +24,7 @@ class SalesOrderService {
           'BatchNo': item.BatchNo ?? '',
           'WarehouseMan': selectedWarehouseman,
           'SecondExpire': item.DateExpire2 ?? '',
-          'Status': "Discounting",
+          'Status': "For Discounting",
         });
       }
 
@@ -41,11 +41,11 @@ class SalesOrderService {
       print("Body: ${response.body}");
 
       if (response.statusCode != 200) {
-        print("❌ Failed to submit order");
+        print("Failed to submit order");
         return false;
       }
 
-      print("✅ All items submitted successfully");
+      print("All items submitted successfully");
       return true;
     } catch (e) {
       print("Exception: $e");

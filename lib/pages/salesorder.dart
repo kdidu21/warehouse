@@ -4,7 +4,6 @@ import 'package:esc_pos_utils/esc_pos_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'dart:convert';
 
 import 'package:vaxiwarehouse/models/salesordermodel.dart';
 import 'package:vaxiwarehouse/utils/getData.dart';
@@ -98,15 +97,6 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
     }
   }
 
-  // Method to remove a booking from the list
-  void _forceRefresh() {
-    setState(() {
-      _bookingStates.clear(); // Clear all states to force a full refresh
-      _loading = true; // Show loading indicator
-    });
-    _fetchData();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,13 +159,15 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
                 return _BookingCard(
                   booking: booking,
                   dateFormat: _dateFormat,
-                  onRefresh: (){
+                  onRefresh: () {
                     setState(() {
-                      _bookings.removeAt( index);
+                      _bookings.removeAt(index);
                     });
-                    //_fetchData();
-                  }
-                  //_forceRefresh,
+                  },
+                  // ADD THIS NEW CALLBACK:
+                  onItemUpdated: () {
+                    setState(() {}); // Force rebuild when item changes
+                  },
                 );
               },
             ),
@@ -187,11 +179,13 @@ class _BookingCard extends StatefulWidget {
   final salesorder booking;
   final DateFormat dateFormat;
   final VoidCallback onRefresh;
+  final VoidCallback onItemUpdated; // ADD THIS
 
   const _BookingCard({
     required this.booking,
     required this.dateFormat,
     required this.onRefresh,
+    required this.onItemUpdated, // ADD THIS
   });
 
   @override
@@ -616,9 +610,14 @@ class _BookingCardState extends State<_BookingCard> {
                                           ? ''
                                           : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}';
 
-                                      Navigator.pop(context);
-                                      // ✅ Refresh parent list
-                                      parentSetState(() {});
+                                      Navigator.pop(context); // Close dialog
+
+                                      // ✅ CRITICAL FIX: Update both card state AND parent state
+                                      parentSetState(
+                                        () {},
+                                      ); // Refresh the card's item list
+                                      widget
+                                          .onItemUpdated(); // Notify parent to rebuild
                                     },
                                     child: const Text('Save'),
                                   ),
@@ -857,78 +856,77 @@ class _BookingCardState extends State<_BookingCard> {
                                   onPressed: selectedPerson == null
                                       ? null
                                       : () async {
-                                          // Store context before async operations
-                                          final currentContext = context;
+                                          // Store context BEFORE closing dialog
+                                          final nav = Navigator.of(context);
+                                          final messenger =
+                                              ScaffoldMessenger.of(context);
+                                          final person = selectedPerson!;
 
-                                          // Close the person selection dialog
-                                          Navigator.pop(currentContext);
+                                          nav.pop(); // Close the "Prepared by" dialog first
 
-                                          // Show loading indicator
-                                          showDialog(
-                                            context: currentContext,
-                                            barrierDismissible: false,
-                                            builder: (context) => const Center(
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            ),
-                                          );
+                                          // Show loading
+                                          // showDialog(
+                                          //   context: context,
+                                          //   barrierDismissible: false,
+                                          //   builder: (ctx) => const Center(
+                                          //     child: CircularProgressIndicator(),
+                                          //   ),
+                                          // );
 
                                           try {
-                                            widget.onRefresh();
-                                            // Close loading indicator
-                                            if (currentContext.mounted) {
-                                              Navigator.pop(currentContext);
-                                            }
-
                                             // Submit the order
                                             final success =
                                                 await SalesOrderService.submitSalesOrder(
                                                   booking,
-                                                  selectedPerson!,
+                                                  person,
                                                 );
-                                            // Show result
+
+                                            // Close loading - check if still mounted
+                                            if (context.mounted) {
+                                              nav.pop(); // Close loading dialog
+                                            }
+
+                                            // Show result AFTER closing loading
                                             if (success) {
                                               widget.onRefresh();
-                                              if (currentContext.mounted) {
-                                                ScaffoldMessenger.of(
-                                                  currentContext,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Order ${booking.Sono} submitted by $selectedPerson',
-                                                    ),
-                                                    backgroundColor:
-                                                        Colors.green,
-                                                  ),
-                                                );
-                                              }
-                                            } else {
-                                              if (currentContext.mounted) {
-                                                ScaffoldMessenger.of(
-                                                  currentContext,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'Failed to submit order. Please try again.',
-                                                    ),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
-                                              }
-                                            }
-                                          } catch (e) {
-                                            // Close loading indicator on error
-                                            if (currentContext.mounted) {
-                                              Navigator.pop(currentContext);
-                                              ScaffoldMessenger.of(
-                                                currentContext,
-                                              ).showSnackBar(
+                                              messenger.showSnackBar(
                                                 SnackBar(
-                                                  content: Text('Error: $e'),
+                                                  content: Text(
+                                                    'Order ${booking.Sono} submitted by $person',
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                  duration: const Duration(
+                                                    seconds: 3,
+                                                  ),
+                                                ),
+                                              );
+                                            } else {
+                                              messenger.showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Failed to submit order. Please try again.',
+                                                  ),
                                                   backgroundColor: Colors.red,
+                                                  duration: Duration(
+                                                    seconds: 3,
+                                                  ),
                                                 ),
                                               );
                                             }
+                                          } catch (e) {
+                                            // Close loading on error
+                                            if (context.mounted) {
+                                              nav.pop();
+                                            }
+                                            messenger.showSnackBar(
+                                              SnackBar(
+                                                content: Text('Error: $e'),
+                                                backgroundColor: Colors.red,
+                                                duration: const Duration(
+                                                  seconds: 3,
+                                                ),
+                                              ),
+                                            );
                                           }
                                         },
                                   child: const Text('Submit'),
@@ -1014,76 +1012,64 @@ class _BookingCardState extends State<_BookingCard> {
                   onPressed: selectedPerson == null
                       ? null
                       : () async {
-                          final currentContext = context;
-                          Navigator.pop(currentContext);
+                          // Store navigator and messenger BEFORE async work
+                          final nav = Navigator.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
+                          final person = selectedPerson!;
 
-                          showDialog(
-                            context: currentContext,
-                            barrierDismissible: false,
-                            builder: (context) => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
+                          // // Show loading
+                          //   showDialog(
+                          //   context: context,
+                          //   barrierDismissible: false,
+                          //   builder: (ctx) => const Center(
+                          //     child: CircularProgressIndicator(),
+                          //   ),
+                          // );
 
+                          nav.pop(); // Close the "Prepared by" dialog first
                           try {
-                            if (currentContext.mounted) {
-                              Navigator.pop(currentContext);
-                            }
-                            String so = booking.Sono;
-                            String st = status;
-                            String sp = selectedPerson!;
                             String url =
-                                'http://shopapi.vaxilifecorp.com/api/appsales?sono=${so}_${st}_${sp}';
+                                'http://shopapi.vaxilifecorp.com/api/appsales?sono=${booking.Sono}_${status}_$person';
 
-                            // Call API to update status
                             final response = await http.get(Uri.parse(url));
 
+                            // // Close loading - check mounted
+                            // if (context.mounted) {
+                            //   nav.pop();
+                            // }
+
                             if (response.statusCode == 200) {
-                              widget.onRefresh();
-                            if (currentContext.mounted) {
-                              ScaffoldMessenger.of(
-                                currentContext,
-                              ).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Order ${booking.Sono} marked as $currentStatus by $selectedPerson',
-                                     ),
-                                    backgroundColor: Colors.green,
-                                  ),
-                              );
-
-                            
-
-                              
-                              // Wait a moment then refresh
-                              // Future.delayed(const Duration(milliseconds: 500), () {
-                              //   widget.onRefresh();
-                              // });
-                            }
-                          } else {
-                              if (currentContext.mounted) {
-                                ScaffoldMessenger.of(
-                                  currentContext,
-                                ).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Failed to update status. Please try again.',
-                                    ),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            if (currentContext.mounted) {
-                              Navigator.pop(currentContext);
-                              ScaffoldMessenger.of(currentContext).showSnackBar(
+                              // Show snackbar BEFORE refresh
+                              messenger.showSnackBar(
                                 SnackBar(
-                                  content: Text('Error: $e'),
+                                  content: Text(
+                                    'Order ${booking.Sono} marked as $status by $person',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                              // Refresh AFTER snackbar
+                              widget.onRefresh();
+                            } else {
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Failed to update status. Please try again.',
+                                  ),
                                   backgroundColor: Colors.red,
+                                  duration: Duration(seconds: 3),
                                 ),
                               );
                             }
+                          } catch (e) {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Error: $e'),
+                                backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
                           }
                         },
                   child: const Text('Submit'),
@@ -1160,6 +1146,8 @@ class _BookingCardState extends State<_BookingCard> {
   }
 
   Future<void> printSalesOrderTemplateESCUtils(salesorder booking) async {
+    final messenger = ScaffoldMessenger.of(context);
+
     final profile = await CapabilityProfile.load(); // auto-detect printer
     final generator = Generator(PaperSize.mm58, profile); // XP-58IIH is 58mm
 
@@ -1272,12 +1260,20 @@ class _BookingCardState extends State<_BookingCard> {
     bool success = await PrinterHelper.printBytes(Uint8List.fromList(bytes));
 
     if (success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Printed successfully!')));
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Printed successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to print. Check printer.')),
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Failed to print. Check printer.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
       );
     }
   }
