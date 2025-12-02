@@ -4,6 +4,7 @@ import 'package:esc_pos_utils/esc_pos_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'dart:convert';
 
 import 'package:vaxiwarehouse/models/salesordermodel.dart';
 import 'package:vaxiwarehouse/utils/getData.dart';
@@ -24,6 +25,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
   String _sortOption = 'Clinic Name (A–Z)';
   final DateFormat _dateFormat = DateFormat('MMM dd, yyyy');
   bool _loading = true;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -35,6 +37,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -100,855 +103,1522 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          "Sales Orders",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.teal,
-        actions: [
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _sortOption,
-              dropdownColor: Colors.white,
-              items: const [
-                DropdownMenuItem(
-                  value: 'Clinic Name (A–Z)',
-                  child: Text('Clinic Name (A–Z)'),
-                ),
-                DropdownMenuItem(
-                  value: 'Clinic Name (Z–A)',
-                  child: Text('Clinic Name (Z–A)'),
-                ),
-                DropdownMenuItem(
-                  value: 'Date (Newest First)',
-                  child: Text('Date (Newest First)'),
-                ),
-                DropdownMenuItem(
-                  value: 'Date (Oldest First)',
-                  child: Text('Date (Oldest First)'),
-                ),
-                DropdownMenuItem(
-                  value: 'Area (A–Z)',
-                  child: Text('Area (A–Z)'),
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          // Header
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 16,
+              bottom: 16,
+              left: 20,
+              right: 20,
+            ),
+            decoration: BoxDecoration(
+              color: Color(0xFFDC2626),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(2),
+                bottomRight: Radius.circular(2),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
                 ),
               ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _sortOption = value;
-                    _sortBookings(_bookings);
-                  });
-                }
-              },
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Sales Orders",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 28,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _sortOption,
+                          dropdownColor: Colors.white,
+                          icon: const Icon(
+                            Icons.filter_list_rounded,
+                            color: Colors.white,
+                          ),
+                          underline: const SizedBox(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Clinic Name (A–Z)',
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: 16.0,
+                                ), // Add left padding
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.sort_by_alpha,
+                                      size: 18,
+                                      color: Colors.black,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Clinic Name (A–Z)',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Clinic Name (Z–A)',
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: 16.0,
+                                ), // Add left padding
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.sort_by_alpha,
+                                      size: 18,
+                                      color: Colors.black,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Clinic Name (Z–A)',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Date (Newest First)',
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: 16.0,
+                                ), // Add left padding
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.date_range,
+                                      size: 18,
+                                      color: Colors.black,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Date (Newest First)',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Date (Oldest First)',
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: 16.0,
+                                ), // Add left padding
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.date_range,
+                                      size: 18,
+                                      color: Colors.black,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Date (Oldest First)',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Area (A–Z)',
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: 16.0,
+                                ), // Add left padding
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 18,
+                                      color: Colors.black,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Area (A–Z)',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _sortOption = value;
+                                _sortBookings(_bookings);
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '${_bookings.length} orders found',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 10),
+
+          // Content
+          Expanded(
+            child: _loading
+                ? _buildLoadingState()
+                : _bookings.isEmpty
+                ? _buildEmptyState()
+                : _buildOrdersList(),
+          ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
-          : _bookings.isEmpty
-          ? const Center(child: Text('No bookings found.'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: _bookings.length,
-              itemBuilder: (context, index) {
-                final booking = _bookings[index];
-                return _BookingCard(
-                  booking: booking,
-                  dateFormat: _dateFormat,
-                  onRefresh: () {
-                    setState(() {
-                      _bookings.removeAt(index);
-                    });
-                  },
-                  // ADD THIS NEW CALLBACK:
-                  onItemUpdated: () {
-                    setState(() {}); // Force rebuild when item changes
-                  },
-                );
-              },
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 60,
+            height: 60,
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDC2626)),
+              strokeWidth: 4,
             ),
+          ),
+          SizedBox(height: 20),
+          Text(
+            'Loading Orders',
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Getting the latest sales orders...',
+            style: TextStyle(color: Colors.grey[500], fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Color(0xFFFEF2F2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.inventory_2_outlined,
+              size: 50,
+              color: Color(0xFFDC2626),
+            ),
+          ),
+          SizedBox(height: 24),
+          Text(
+            'No Orders Found',
+            style: TextStyle(
+              fontSize: 22,
+              color: Colors.grey[800],
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'New sales orders will appear here automatically',
+            style: TextStyle(color: Colors.grey[600], fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _fetchData,
+            icon: Icon(Icons.refresh_rounded),
+            label: Text('Refresh'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrdersList() {
+    return RefreshIndicator(
+      onRefresh: _fetchData,
+      color: Color(0xFFDC2626),
+      backgroundColor: Colors.white,
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: EdgeInsets.all(16),
+        itemCount: _bookings.length,
+        itemBuilder: (context, index) {
+          final booking = _bookings[index];
+          return _OrderCard(
+            booking: booking,
+            dateFormat: _dateFormat,
+            onRefresh: () {
+              setState(() {
+                _bookings.removeAt(index);
+              });
+            },
+          );
+        },
+      ),
     );
   }
 }
 
-class _BookingCard extends StatefulWidget {
+class _OrderCard extends StatefulWidget {
   final salesorder booking;
   final DateFormat dateFormat;
   final VoidCallback onRefresh;
-  final VoidCallback onItemUpdated; // ADD THIS
 
-  const _BookingCard({
+  const _OrderCard({
     required this.booking,
     required this.dateFormat,
     required this.onRefresh,
-    required this.onItemUpdated, // ADD THIS
   });
 
   @override
-  State<_BookingCard> createState() => _BookingCardState();
+  State<_OrderCard> createState() => _OrderCardState();
 }
 
-String safeDecode(String? input) {
-  if (input == null || input.isEmpty) return '';
-  try {
-    return Uri.decodeComponent(input);
-  } catch (_) {
-    return input;
-  }
-}
-
-class _BookingCardState extends State<_BookingCard> {
-  bool expanded = false;
+class _OrderCardState extends State<_OrderCard> {
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
     final booking = widget.booking;
+    final totalItems = booking.items.length;
+    final totalQuantity = booking.items.fold(
+      0,
+      (sum, item) => sum + item.Quantity,
+    );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      child: Material(
+        elevation: 3,
+        borderRadius: BorderRadius.circular(20),
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => setState(() => expanded = !expanded),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color.fromRGBO(221, 214, 155, 100),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Column(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          booking.ClinicName,
-                          style: const TextStyle(
-                            color: Color.fromRGBO(0, 63, 119, 85),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          booking.AreaName,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
+                          child: Icon(
+                            Icons.local_hospital_rounded,
+                            color: Colors.white,
+                            size: 22,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          safeDecode(booking.Remarks),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                booking.ClinicName,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  height: 1.2,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on_rounded,
+                                    size: 14,
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    booking.AreaName,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          // Remove overflow: TextOverflow.ellipsis to allow wrapping
+                        ),
+                        _buildOrderBadge(),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    if (booking.Remarks.isNotEmpty)
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.comment_rounded,
+                              size: 14,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                safeDecode(booking.Remarks),
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Order Summary
+              Container(
+                padding: EdgeInsets.all(16),
+                color: Colors.grey[50],
+                child: Row(
+                  children: [
+                    _buildSummaryItem(
+                      Icons.inventory_2_rounded,
+                      '$totalItems',
+                      'Items',
+                    ),
+                    _buildSummaryItem(
+                      Icons.shopping_cart_rounded,
+                      '$totalQuantity',
+                      'Total Qty',
+                    ),
+                    _buildSummaryItem(
+                      Icons.calendar_today_rounded,
+                      widget.dateFormat.format(
+                        booking.DateOrder ?? DateTime.now(),
+                      ),
+                      'Order Date',
+                    ),
+                    Spacer(),
+                    GestureDetector(
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFDC2626),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _expanded
+                                  ? Icons.expand_less_rounded
+                                  : Icons.expand_more_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              _expanded ? 'HIDE' : 'VIEW',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Items List
+              AnimatedSize(
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: _expanded ? _buildItemsList() : SizedBox.shrink(),
+              ),
+
+              // Actions
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildStatusChip(
+                            'On-Hold',
+                            Icons.pause_circle_filled_rounded,
+                            Color(0xFFF59E0B),
+                          ),
+                          _buildStatusChip(
+                            'Double-Booking',
+                            Icons.copy_all_rounded,
+                            Color(0xFF8B5CF6),
+                          ),
+                          _buildStatusChip(
+                            'Out of Stocks',
+                            Icons.error_outline_rounded,
+                            Color(0xFFEF4444),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Row(
+                      spacing: 10,
+                      children: [
+                        _buildActionButton(
+                          'Print',
+                          Icons.print_rounded,
+                          Color(0xFFDC2626),
+                          () => _printOrder(booking),
+                        ),
+                        SizedBox(height: 8),
+                        _buildActionButton(
+                          'Submit',
+                          Icons.send_rounded,
+                          Color(0xFF059669),
+                          () => _showSubmitDialog(context, booking),
                         ),
                       ],
                     ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        widget.dateFormat.format(
-                          booking.DateOrder ?? DateTime.now(),
-                        ),
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Icon(
-                        expanded ? Icons.expand_less : Icons.expand_more,
-                        color: Colors.white,
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderBadge() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            widget.booking.Sono,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
           ),
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 300),
-            crossFadeState: expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            firstChild: const SizedBox.shrink(),
-            secondChild: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: booking.items.map((item) {
-                  return InkWell(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          final batchController = TextEditingController(
-                            text:
-                                (item.BatchNo == null ||
-                                    item.BatchNo!.isEmpty ||
-                                    item.BatchNo == 'N/A')
-                                ? ''
-                                : item.BatchNo!,
-                          );
-                          final qtyController = TextEditingController(
-                            text: item.PreparedQuantity > 0
-                                ? item.PreparedQuantity.toString()
-                                : '',
-                          );
-                          DateTime? exp1;
-                          DateTime? exp2;
+        ),
+        SizedBox(height: 6),
+        Text(
+          'Sales Order',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
 
-                          // In the dialog where you parse the dates:
-                          if (item.DateExpire.isNotEmpty &&
-                              item.DateExpire != 'N/A') {
-                            try {
-                              final parts = item.DateExpire.split('-');
-                              // ✅ FIXED: parts[0] is YEAR, parts[1] is MONTH (input is YYYY-MM)
-                              if (parts.length == 2) {
-                                exp1 = DateTime(
-                                  int.parse(parts[0]), // year (first part)
-                                  int.parse(parts[1]), // month (second part)
-                                  1,
-                                );
-                              }
-                            } catch (_) {
-                              print(
-                                'Error parsing DateExpire: ${item.DateExpire}',
-                              );
-                            }
-                          }
-
-                          if (item.DateExpire2 != null &&
-                              item.DateExpire2!.isNotEmpty &&
-                              item.DateExpire2 != 'N/A') {
-                            try {
-                              final parts = item.DateExpire2!.split('-');
-                              // ✅ FIXED: parts[0] is YEAR, parts[1] is MONTH (input is YYYY-MM)
-                              if (parts.length == 2) {
-                                exp2 = DateTime(
-                                  int.parse(parts[0]), // year (first part)
-                                  int.parse(parts[1]), // month (second part)
-                                  1,
-                                );
-                              }
-                            } catch (_) {
-                              print(
-                                'Error parsing DateExpire2: ${item.DateExpire2}',
-                              );
-                            }
-                          }
-                          // capture parent setState
-                          final parentSetState = setState;
-
-                          return StatefulBuilder(
-                            builder: (context, localSetState) {
-                              Future<void> pickYearMonth(bool first) async {
-                                final now = DateTime.now();
-                                DateTime tempDate = first
-                                    ? (exp1 ?? now)
-                                    : (exp2 ?? now);
-
-                                await showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    int selectedYear = tempDate.year;
-                                    int selectedMonth = tempDate.month;
-
-                                    // ✅ Generate year range that includes selectedYear
-                                    final minYear = selectedYear < now.year - 5
-                                        ? selectedYear
-                                        : now.year - 5;
-                                    final maxYear = selectedYear > now.year + 4
-                                        ? selectedYear
-                                        : now.year + 4;
-                                    final yearRange = maxYear - minYear + 1;
-
-                                    return StatefulBuilder(
-                                      builder: (context, setDialogState) {
-                                        return AlertDialog(
-                                          title: const Text(
-                                            'Select Year and Month',
-                                          ),
-                                          content: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              DropdownButton<int>(
-                                                value: selectedYear,
-                                                items: List.generate(
-                                                  yearRange,
-                                                  (i) => DropdownMenuItem(
-                                                    value: minYear + i,
-                                                    child: Text(
-                                                      '${minYear + i}',
-                                                    ),
-                                                  ),
-                                                ),
-                                                onChanged: (v) {
-                                                  if (v != null) {
-                                                    setDialogState(() {
-                                                      selectedYear = v;
-                                                    });
-                                                  }
-                                                },
-                                              ),
-                                              DropdownButton<int>(
-                                                value: selectedMonth,
-                                                items: List.generate(
-                                                  12,
-                                                  (i) => DropdownMenuItem(
-                                                    value: i + 1,
-                                                    child: Text(
-                                                      '${i + 1}'.padLeft(
-                                                        2,
-                                                        '0',
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                onChanged: (v) {
-                                                  if (v != null) {
-                                                    setDialogState(() {
-                                                      selectedMonth = v;
-                                                    });
-                                                  }
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                final selectedDate = DateTime(
-                                                  selectedYear,
-                                                  selectedMonth,
-                                                  1,
-                                                );
-                                                localSetState(() {
-                                                  if (first) {
-                                                    exp1 = selectedDate;
-                                                  } else {
-                                                    exp2 = selectedDate;
-                                                  }
-                                                });
-                                                Navigator.pop(context);
-                                              },
-                                              child: const Text('Select'),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  },
-                                );
-                              }
-
-                              return AlertDialog(
-                                title: const Text('Enter Item Details'),
-                                content: SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextField(
-                                        controller: batchController,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Batch No',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        onTap: () {
-                                          batchController.selection =
-                                              TextSelection(
-                                                baseOffset: 0,
-                                                extentOffset:
-                                                    batchController.text.length,
-                                              );
-                                        },
-                                      ),
-                                      const SizedBox(height: 10),
-                                      TextField(
-                                        controller: qtyController,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Prepared Quantity',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        keyboardType: TextInputType.number,
-                                        onTap: () {
-                                          qtyController.selection =
-                                              TextSelection(
-                                                baseOffset: 0,
-                                                extentOffset:
-                                                    qtyController.text.length,
-                                              );
-                                        },
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: OutlinedButton(
-                                              onPressed: () =>
-                                                  pickYearMonth(true),
-                                              child: Text(
-                                                exp1 == null
-                                                    ? 'Select Expiration 1'
-                                                    : 'Exp1: ${exp1!.year}-${exp1!.month.toString().padLeft(2, '0')}',
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: OutlinedButton(
-                                              onPressed: () =>
-                                                  pickYearMonth(false),
-                                              child: Text(
-                                                exp2 == null
-                                                    ? 'Select Expiration 2'
-                                                    : 'Exp2: ${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}',
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      final batchNo = batchController.text
-                                          .trim();
-                                      final qtyText = qtyController.text.trim();
-
-                                      if (qtyText.isEmpty) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Please enter Prepared Quantity',
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      final qty = int.tryParse(qtyText) ?? 0;
-                                      final maxQty =
-                                          double.tryParse(
-                                            item.Quantity.toString(),
-                                          ) ??
-                                          0;
-
-                                      if (qty <= 0 || qty > maxQty) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Invalid quantity (max $maxQty)',
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      if (exp1 == null) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Please select the first expiration date',
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // ✅ Update model
-                                      item.BatchNo = batchNo;
-                                      item.PreparedQuantity = qty;
-                                      item.DateExpire =
-                                          '${exp1!.year}-${exp1!.month.toString().padLeft(2, '0')}';
-                                      item.DateExpire2 = exp2 == null
-                                          ? ''
-                                          : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}';
-
-                                      Navigator.pop(context); // Close dialog
-
-                                      // ✅ CRITICAL FIX: Update both card state AND parent state
-                                      parentSetState(
-                                        () {},
-                                      ); // Refresh the card's item list
-                                      widget
-                                          .onItemUpdated(); // Notify parent to rebuild
-                                    },
-                                    child: const Text('Save'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 12,
-                      ),
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text(
-                            '${item.id}',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              item.ItemCode.substring(
-                                0,
-                                item.ItemCode.length > 20
-                                    ? 20
-                                    : item.ItemCode.length,
-                              ),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-
-                          Text(
-                            (item.DateExpire.isEmpty ||
-                                    item.DateExpire == 'N/A')
-                                ? 'No Expiration'
-                                : item.DateExpire ?? 'No Expiration',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          const SizedBox(width: 16),
-                          Text(
-                            (item.BatchNo == null || item.BatchNo!.isEmpty)
-                                ? 'No Batch'
-                                : item.BatchNo!,
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          const SizedBox(width: 16),
-                          Text(
-                            '${item.PreparedQuantity}',
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Text(
-                            item.UnitOfMeasure,
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 25),
-                          Text(
-                            '${item.Quantity}',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Text(
-                            item.UnitOfMeasure,
-                            style: const TextStyle(color: Colors.black54),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+  Widget _buildSummaryItem(IconData icon, String value, String label) {
+    return Container(
+      margin: EdgeInsets.only(right: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: Colors.grey[600]),
+              SizedBox(width: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey[800],
+                ),
               ),
+            ],
+          ),
+          SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[500],
+              fontWeight: FontWeight.w500,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemsList() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+      ),
+      child: Column(
+        children: [
+         // Table Header
+Container(
+  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  decoration: BoxDecoration(
+    color: Colors.grey[50],
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(color: Colors.grey[300]!),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        flex: 3,
+        child: Text(
+          'PRODUCT',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.grey[600],
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          'BATCH',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.grey[600],
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      Expanded(
+        child: Text(
+          'EXPIRY',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.grey[600],
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      Expanded(
+        child: Text(
+          'PREPARED',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.grey[600],
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      Expanded(
+        child: Text(
+          'ORDERED',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.grey[600],
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    ],
+  ),
+),
+          SizedBox(height: 8),
+          ...widget.booking.items.map((item) => _buildItemRow(item)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemRow(salesorderdetails item) {
+  return InkWell(
+    onTap: () => _showItemDetailsDialog(item),
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      margin: EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          // PRODUCT column - flex: 3 (3x wider than others)
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Left side - Status Radio Buttons
-                Expanded(
-                  child: Row(
-                    children: [
-                      Row(
-                        children: [
-                          Radio<String>(
-                            value: 'On-Hold',
-                            groupValue: null,
-                            onChanged: (value) {
-                              if (value != null) {
-                                _showPreparedByDialog(context, booking, value);
-                              }
-                            },
-                            activeColor: Colors.amber,
-                          ),
-                          const Text('On-Hold', style: TextStyle(fontSize: 11)),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Radio<String>(
-                            value: 'Double-Booking',
-                            groupValue: null,
-                            onChanged: (value) {
-                              if (value != null) {
-                                _showPreparedByDialog(context, booking, value);
-                              }
-                            },
-                            activeColor: Colors.purple,
-                          ),
-                          const Text(
-                            'Double-Booking',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Radio<String>(
-                            value: 'Out of Stocks',
-                            groupValue: null,
-                            onChanged: (value) {
-                              if (value != null) {
-                                _showPreparedByDialog(context, booking, value);
-                              }
-                            },
-                            activeColor: Colors.red,
-                          ),
-                          const Text(
-                            'Out of Stocks',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ],
+                Text(
+                  item.ItemCode,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Colors.grey[800],
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 12),
-                // Right side - Print and Submit buttons
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await printSalesOrderTemplateESCUtils(booking);
-                  },
-                  icon: const Icon(Icons.print, size: 18),
-                  label: const Text('Print'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        String? selectedPerson;
-
-                        return StatefulBuilder(
-                          builder: (context, setDialogState) {
-                            return AlertDialog(
-                              title: Text('Prepared by'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  RadioListTile<String>(
-                                    title: const Text('Fe'),
-                                    value: 'Fe',
-                                    groupValue: selectedPerson,
-                                    onChanged: (value) {
-                                      setDialogState(() {
-                                        selectedPerson = value;
-                                      });
-                                    },
-                                  ),
-                                  RadioListTile<String>(
-                                    title: const Text('Edrin'),
-                                    value: 'Edrin',
-                                    groupValue: selectedPerson,
-                                    onChanged: (value) {
-                                      setDialogState(() {
-                                        selectedPerson = value;
-                                      });
-                                    },
-                                  ),
-                                  RadioListTile<String>(
-                                    title: const Text('Anne'),
-                                    value: 'Anne',
-                                    groupValue: selectedPerson,
-                                    onChanged: (value) {
-                                      setDialogState(() {
-                                        selectedPerson = value;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Cancel'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: selectedPerson == null
-                                      ? null
-                                      : () async {
-                                          // Store context BEFORE closing dialog
-                                          final nav = Navigator.of(context);
-                                          final messenger =
-                                              ScaffoldMessenger.of(context);
-                                          final person = selectedPerson!;
-
-                                          nav.pop(); // Close the "Prepared by" dialog first
-
-                                          // Show loading
-                                          // showDialog(
-                                          //   context: context,
-                                          //   barrierDismissible: false,
-                                          //   builder: (ctx) => const Center(
-                                          //     child: CircularProgressIndicator(),
-                                          //   ),
-                                          // );
-
-                                          try {
-                                            // Submit the order
-                                            final success =
-                                                await SalesOrderService.submitSalesOrder(
-                                                  booking,
-                                                  person,
-                                                );
-
-                                            // Close loading - check if still mounted
-                                            if (context.mounted) {
-                                              nav.pop(); // Close loading dialog
-                                            }
-
-                                            // Show result AFTER closing loading
-                                            if (success) {
-                                              widget.onRefresh();
-                                              messenger.showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'Order ${booking.Sono} submitted by $person',
-                                                  ),
-                                                  backgroundColor: Colors.green,
-                                                  duration: const Duration(
-                                                    seconds: 3,
-                                                  ),
-                                                ),
-                                              );
-                                            } else {
-                                              messenger.showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'Failed to submit order. Please try again.',
-                                                  ),
-                                                  backgroundColor: Colors.red,
-                                                  duration: Duration(
-                                                    seconds: 3,
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                          } catch (e) {
-                                            // Close loading on error
-                                            if (context.mounted) {
-                                              nav.pop();
-                                            }
-                                            messenger.showSnackBar(
-                                              SnackBar(
-                                                content: Text('Error: $e'),
-                                                backgroundColor: Colors.red,
-                                                duration: const Duration(
-                                                  seconds: 3,
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                  child: const Text('Submit'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.send, size: 18),
-                  label: const Text('Submit'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
+                SizedBox(height: 2),
+                Text(
+                  item.UnitOfMeasure,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 11,
                   ),
                 ),
               ],
             ),
           ),
+          
+          // BATCH column - flex: 1
+          Expanded(
+            child: Center(
+              child: Text(
+                (item.BatchNo == null || item.BatchNo!.isEmpty || item.BatchNo == 'N/A')
+                    ? 'N/A'
+                    : item.BatchNo!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: (item.BatchNo == null || item.BatchNo!.isEmpty || item.BatchNo == 'N/A')
+                      ? Colors.grey[400]
+                      : Colors.grey[800],
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          
+          // EXPIRY column - flex: 1
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    (item.DateExpire.isEmpty || item.DateExpire == 'N/A')
+                        ? 'N/A'
+                        : item.DateExpire,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: (item.DateExpire.isEmpty || item.DateExpire == 'N/A')
+                          ? Colors.grey[400]
+                          : Colors.grey[800],
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (item.DateExpire2 != null && 
+                      item.DateExpire2!.isNotEmpty && 
+                      item.DateExpire2 != 'N/A')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
+                      child: Text(
+                        item.DateExpire2!,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey[500],
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          
+          // PREPARED column - flex: 1
+          Expanded(
+            child: Center(
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 4),
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                decoration: BoxDecoration(
+                  color: item.PreparedQuantity > 0
+                      ? Color(0xFF10B981).withOpacity(0.15)
+                      : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: item.PreparedQuantity > 0
+                        ? Color(0xFF059669).withOpacity(0.3)
+                        : Colors.grey[300]!,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  '${item.PreparedQuantity}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: item.PreparedQuantity > 0
+                        ? Color(0xFF059669)
+                        : Colors.grey[500],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+          
+          // ORDERED column - flex: 1
+          Expanded(
+            child: Center(
+              child: Text(
+                '${item.Quantity}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
         ],
+      ),
+    ),
+  );
+}
+
+  Widget _buildStatusChip(String status, IconData icon, Color color) {
+    return ActionChip(
+      onPressed: () => _showPreparedByDialog(context, widget.booking, status),
+      avatar: Icon(icon, size: 16, color: color),
+      label: Text(
+        status,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+      backgroundColor: color.withOpacity(0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: color.withOpacity(0.3)),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    String text,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed,
+  ) {
+    return Container(
+      width: 100,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 16),
+        label: Text(
+          text,
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          elevation: 1,
+        ),
+      ),
+    );
+  }
+
+  void _showItemDetailsDialog(salesorderdetails item) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final batchController = TextEditingController(
+          text:
+              (item.BatchNo == null ||
+                  item.BatchNo!.isEmpty ||
+                  item.BatchNo == 'N/A')
+              ? ''
+              : item.BatchNo!,
+        );
+        final qtyController = TextEditingController(
+          text: item.PreparedQuantity > 0
+              ? item.PreparedQuantity.toString()
+              : '',
+        );
+        DateTime? exp1;
+        DateTime? exp2;
+
+        if (item.DateExpire.isNotEmpty && item.DateExpire != 'N/A') {
+          try {
+            final parts = item.DateExpire.split('-');
+            if (parts.length == 2) {
+              exp1 = DateTime(int.parse(parts[0]), int.parse(parts[1]), 1);
+            }
+          } catch (_) {
+            print('Error parsing DateExpire: ${item.DateExpire}');
+          }
+        }
+
+        if (item.DateExpire2 != null &&
+            item.DateExpire2!.isNotEmpty &&
+            item.DateExpire2 != 'N/A') {
+          try {
+            final parts = item.DateExpire2!.split('-');
+            if (parts.length == 2) {
+              exp2 = DateTime(int.parse(parts[0]), int.parse(parts[1]), 1);
+            }
+          } catch (_) {
+            print('Error parsing DateExpire2: ${item.DateExpire2}');
+          }
+        }
+
+        final parentSetState = setState;
+
+        return StatefulBuilder(
+          builder: (context, localSetState) {
+            Future<void> pickYearMonth(bool first) async {
+              final now = DateTime.now();
+              DateTime tempDate = first ? (exp1 ?? now) : (exp2 ?? now);
+
+              await showDialog(
+                context: context,
+                builder: (context) {
+                  int selectedYear = tempDate.year;
+                  int selectedMonth = tempDate.month;
+
+                  final minYear = selectedYear < now.year - 5
+                      ? selectedYear
+                      : now.year - 5;
+                  final maxYear = selectedYear > now.year + 4
+                      ? selectedYear
+                      : now.year + 4;
+                  final yearRange = maxYear - minYear + 1;
+
+                  return StatefulBuilder(
+                    builder: (context, setDialogState) {
+                      return Dialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Select Year and Month',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Year',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  DropdownButton<int>(
+                                    value: selectedYear,
+                                    isExpanded: true,
+                                    items: List.generate(
+                                      yearRange,
+                                      (i) => DropdownMenuItem(
+                                        value: minYear + i,
+                                        child: Text('${minYear + i}'),
+                                      ),
+                                    ),
+                                    onChanged: (v) {
+                                      if (v != null) {
+                                        setDialogState(() {
+                                          selectedYear = v;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Month',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  DropdownButton<int>(
+                                    value: selectedMonth,
+                                    isExpanded: true,
+                                    items: List.generate(
+                                      12,
+                                      (i) => DropdownMenuItem(
+                                        value: i + 1,
+                                        child: Text('${i + 1}'.padLeft(2, '0')),
+                                      ),
+                                    ),
+                                    onChanged: (v) {
+                                      if (v != null) {
+                                        setDialogState(() {
+                                          selectedMonth = v;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                        side: BorderSide(color: Colors.grey),
+                                      ),
+                                      child: Text('Cancel'),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        final selectedDate = DateTime(
+                                          selectedYear,
+                                          selectedMonth,
+                                          1,
+                                        );
+                                        localSetState(() {
+                                          if (first) {
+                                            exp1 = selectedDate;
+                                          } else {
+                                            exp2 = selectedDate;
+                                          }
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0xFFDC2626),
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                      child: Text('Select'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            }
+
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.inventory_2_rounded,
+                            color: Color(0xFFDC2626),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Item Details',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      item.ItemCode,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Unit: ${item.UnitOfMeasure}',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    SizedBox(height: 24),
+                    TextField(
+                      controller: batchController,
+                      decoration: InputDecoration(
+                        labelText: 'Batch Number',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: Icon(Icons.tag_rounded),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    TextField(
+                      controller: qtyController,
+                      decoration: InputDecoration(
+                        labelText: 'Prepared Quantity',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: Icon(Icons.scale_rounded),
+                        suffixText: 'Max: ${item.Quantity}',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Expiration Dates',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => pickYearMonth(true),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            icon: Icon(Icons.calendar_today_rounded, size: 18),
+                            label: Text(
+                              exp1 == null
+                                  ? 'Select Expiration 1'
+                                  : '${exp1!.year}-${exp1!.month.toString().padLeft(2, '0')}',
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => pickYearMonth(false),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            icon: Icon(Icons.calendar_today_rounded, size: 18),
+                            label: Text(
+                              exp2 == null
+                                  ? 'Select Expiration 2'
+                                  : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text('Cancel'),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final batchNo = batchController.text.trim();
+                              final qtyText = qtyController.text.trim();
+
+                              if (qtyText.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Please enter Prepared Quantity',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final qty = int.tryParse(qtyText) ?? 0;
+                              final maxQty =
+                                  double.tryParse(item.Quantity.toString()) ??
+                                  0;
+
+                              if (qty <= 0 || qty > maxQty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Invalid quantity (max $maxQty)',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (exp1 == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Please select the first expiration date',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              item.BatchNo = batchNo;
+                              item.PreparedQuantity = qty;
+                              item.DateExpire =
+                                  '${exp1!.year}-${exp1!.month.toString().padLeft(2, '0')}';
+                              item.DateExpire2 = exp2 == null
+                                  ? ''
+                                  : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}';
+
+                              Navigator.pop(context);
+                              parentSetState(() {});
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFFDC2626),
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text('Save Changes'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSubmitDialog(BuildContext context, salesorder booking) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        String? selectedPerson;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Icon(
+                        Icons.person_rounded,
+                        size: 30,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Submit Order',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Who prepared this order?',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 24),
+                    Column(
+                      children: [
+                        _buildPersonOption('Fe', selectedPerson, (value) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                        _buildPersonOption('Edrin', selectedPerson, (value) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                        _buildPersonOption('Anne', selectedPerson, (value) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey),
+                            ),
+                            child: Text('Cancel'),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: selectedPerson == null
+                                ? null
+                                : () async {
+                                    final nav = Navigator.of(context);
+                                    final messenger = ScaffoldMessenger.of(
+                                      context,
+                                    );
+                                    final person = selectedPerson!;
+
+                                    nav.pop();
+
+                                    try {
+                                      final success =
+                                          await SalesOrderService.submitSalesOrder(
+                                            booking,
+                                            person,
+                                          );
+
+                                      if (success) {
+                                        widget.onRefresh();
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Order ${booking.Sono} submitted by $person',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      } else {
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Failed to submit order. Please try again.',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      messenger.showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF059669),
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text('Submit Order'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPersonOption(
+    String name,
+    String? selectedPerson,
+    Function(String?) setDialogState,
+  ) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: RadioListTile<String>(
+        title: Text(name, style: TextStyle(fontWeight: FontWeight.w500)),
+        value: name,
+        groupValue: selectedPerson,
+        onChanged: (value) {
+          setDialogState(value); // ✅ Call the callback with the new value
+        },
+        activeColor: Color(0xFFDC2626),
       ),
     );
   }
@@ -962,119 +1632,141 @@ class _BookingCardState extends State<_BookingCard> {
       context: context,
       builder: (context) {
         String? selectedPerson;
-        final currentStatus = status; // Capture status variable
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text('Prepared by - $currentStatus'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  RadioListTile<String>(
-                    title: const Text('Fe'),
-                    value: 'Fe',
-                    groupValue: selectedPerson,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedPerson = value;
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Edrin'),
-                    value: 'Edrin',
-                    groupValue: selectedPerson,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedPerson = value;
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Anne'),
-                    value: 'Anne',
-                    groupValue: selectedPerson,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedPerson = value;
-                      });
-                    },
-                  ),
-                ],
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(status).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Icon(
+                        _getStatusIcon(status),
+                        size: 30,
+                        color: _getStatusColor(status),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Mark as $status',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Who is handling this status?',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 24),
+                    Column(
+                      children: [
+                        _buildPersonOption('Fe', selectedPerson, (value) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                        _buildPersonOption('Edrin', selectedPerson, (value) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                        _buildPersonOption('Anne', selectedPerson, (value) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey),
+                            ),
+                            child: Text('Cancel'),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: selectedPerson == null
+                                ? null
+                                : () async {
+                                    final nav = Navigator.of(context);
+                                    final messenger = ScaffoldMessenger.of(
+                                      context,
+                                    );
+                                    final person = selectedPerson!;
+
+                                    nav.pop();
+
+                                    try {
+                                      String url =
+                                          'http://shopapi.vaxilifecorp.com/api/appsales?sono=${booking.Sono}_${status}_$person';
+
+                                      final response = await http.get(
+                                        Uri.parse(url),
+                                      );
+
+                                      if (response.statusCode == 200) {
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Order ${booking.Sono} marked as $status by $person',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                        widget.onRefresh();
+                                      } else {
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Failed to update status. Please try again.',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      messenger.showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _getStatusColor(status),
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text('Confirm'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: selectedPerson == null
-                      ? null
-                      : () async {
-                          // Store navigator and messenger BEFORE async work
-                          final nav = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(context);
-                          final person = selectedPerson!;
-
-                          // // Show loading
-                          //   showDialog(
-                          //   context: context,
-                          //   barrierDismissible: false,
-                          //   builder: (ctx) => const Center(
-                          //     child: CircularProgressIndicator(),
-                          //   ),
-                          // );
-
-                          nav.pop(); // Close the "Prepared by" dialog first
-                          try {
-                            String url =
-                                'http://shopapi.vaxilifecorp.com/api/appsales?sono=${booking.Sono}_${status}_$person';
-
-                            final response = await http.get(Uri.parse(url));
-
-                            // // Close loading - check mounted
-                            // if (context.mounted) {
-                            //   nav.pop();
-                            // }
-
-                            if (response.statusCode == 200) {
-                              // Show snackbar BEFORE refresh
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Order ${booking.Sono} marked as $status by $person',
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
-                              // Refresh AFTER snackbar
-                              widget.onRefresh();
-                            } else {
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Failed to update status. Please try again.',
-                                  ),
-                                  backgroundColor: Colors.red,
-                                  duration: Duration(seconds: 3),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('Error: $e'),
-                                backgroundColor: Colors.red,
-                                duration: const Duration(seconds: 3),
-                              ),
-                            );
-                          }
-                        },
-                  child: const Text('Submit'),
-                ),
-              ],
+              ),
             );
           },
         );
@@ -1082,75 +1774,51 @@ class _BookingCardState extends State<_BookingCard> {
     );
   }
 
-  Future<void> printSalesOrderTemplate(salesorder booking) async {
-    final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
-
-    // ESC/POS command for small font (Font B)
-    const smallFont = '\x1B\x21\x01'; // ESC ! 1 => Small + bold
-    const normalFont = '\x1B\x21\x00'; // ESC ! 0 => Normal font
-
-    StringBuffer buffer = StringBuffer();
-
-    // Header in small font
-    buffer.write(normalFont);
-    buffer.writeln('==============================');
-    buffer.writeln('       VAXI WAREHOUSE         ');
-    buffer.writeln('==============================');
-
-    // Order info
-    buffer.writeln('Order No : ${booking.Sono}');
-    buffer.writeln('Clinic   : ${booking.ClinicName}');
-    buffer.writeln('Area     : ${booking.AreaName}');
-    buffer.writeln(
-      'Date     : ${dateFormat.format(booking.DateOrder ?? DateTime.now())}',
-    );
-    if (booking.Remarks.isNotEmpty) {
-      buffer.writeln('Remarks  : ${booking.Remarks}');
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'On-Hold':
+        return Color(0xFFF59E0B);
+      case 'Double-Booking':
+        return Color(0xFF8B5CF6);
+      case 'Out of Stocks':
+        return Color(0xFFEF4444);
+      default:
+        return Color(0xFFDC2626);
     }
+  }
 
-    buffer.write(smallFont);
-    buffer.writeln('-------------------------------------------');
-    buffer.writeln('Item                      Qty      Exp');
-    buffer.writeln('-------------------------------------------');
-
-    // Items
-    for (var item in booking.items) {
-      String itemName = item.ItemCode.length > 25
-          ? item.ItemCode.substring(0, 25)
-          : item.ItemCode.padRight(25);
-      String qty = item.Quantity.toString().padLeft(5);
-      String exp = item.DateExpire.padRight(9);
-      buffer.writeln('$itemName   $qty   $exp');
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'On-Hold':
+        return Icons.pause_circle_filled_rounded;
+      case 'Double-Booking':
+        return Icons.copy_all_rounded;
+      case 'Out of Stocks':
+        return Icons.error_outline_rounded;
+      default:
+        return Icons.flag_rounded;
     }
-    buffer.write(normalFont);
-    buffer.writeln('------------------------------');
-    buffer.writeln('        THANK YOU!            ');
-    buffer.writeln('==============================');
-    buffer.writeln('\n\n');
+  }
 
-    // Reset to normal font at the end
-    buffer.write(normalFont);
+  Future<void> _printOrder(salesorder booking) async {
+    final messenger = ScaffoldMessenger.of(context);
 
-    // Send to printer
-    bool success = await PrinterHelper.printText(buffer.toString());
-
-    if (success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Printed successfully!')));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to print. Check printer.')),
+    try {
+      await printSalesOrderTemplateESCUtils(booking);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Printing failed: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
   Future<void> printSalesOrderTemplateESCUtils(salesorder booking) async {
     final messenger = ScaffoldMessenger.of(context);
-
-    final profile = await CapabilityProfile.load(); // auto-detect printer
-    final generator = Generator(PaperSize.mm58, profile); // XP-58IIH is 58mm
-
+    final profile = await CapabilityProfile.load();
+    final generator = Generator(PaperSize.mm58, profile);
     final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
 
     List<int> bytes = [];
@@ -1167,7 +1835,6 @@ class _BookingCardState extends State<_BookingCard> {
     );
 
     bytes += generator.text('Order No : ${booking.Sono}');
-    //bytes += generator.text('Clinic   : ${booking.ClinicName}');
     bytes += generator.text('Area     : ${booking.AreaName}');
     bytes += generator.text(
       'Date     : ${dateFormat.format(booking.DateOrder ?? DateTime.now())}',
@@ -1261,7 +1928,7 @@ class _BookingCardState extends State<_BookingCard> {
 
     if (success) {
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Printed successfully!'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
@@ -1269,12 +1936,21 @@ class _BookingCardState extends State<_BookingCard> {
       );
     } else {
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Failed to print. Check printer.'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 2),
         ),
       );
     }
+  }
+}
+
+String safeDecode(String? input) {
+  if (input == null || input.isEmpty) return '';
+  try {
+    return Uri.decodeComponent(input);
+  } catch (_) {
+    return input;
   }
 }
