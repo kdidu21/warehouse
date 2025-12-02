@@ -768,79 +768,79 @@ class _OrderCardState extends State<_OrderCard> {
       ),
       child: Column(
         children: [
-         // Table Header
-Container(
-  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-  decoration: BoxDecoration(
-    color: Colors.grey[50],
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: Colors.grey[300]!),
-  ),
-  child: Row(
-    children: [
-      Expanded(
-        flex: 3,
-        child: Text(
-          'PRODUCT',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[600],
-            fontSize: 12,
-            letterSpacing: 0.5,
+          // Table Header
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'PRODUCT',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'BATCH',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'EXPIRY',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'PREPARED',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'ORDERED',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
-      Expanded(
-        child: Text(
-          'BATCH',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[600],
-            fontSize: 12,
-            letterSpacing: 0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-      Expanded(
-        child: Text(
-          'EXPIRY',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[600],
-            fontSize: 12,
-            letterSpacing: 0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-      Expanded(
-        child: Text(
-          'PREPARED',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[600],
-            fontSize: 12,
-            letterSpacing: 0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-      Expanded(
-        child: Text(
-          'ORDERED',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[600],
-            fontSize: 12,
-            letterSpacing: 0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    ],
-  ),
-),
           SizedBox(height: 8),
           ...widget.booking.items.map((item) => _buildItemRow(item)),
         ],
@@ -849,159 +849,163 @@ Container(
   }
 
   Widget _buildItemRow(salesorderdetails item) {
-  return InkWell(
-    onTap: () => _showItemDetailsDialog(item),
-    borderRadius: BorderRadius.circular(12),
-    child: Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      margin: EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          // PRODUCT column - flex: 3 (3x wider than others)
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.ItemCode,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: Colors.grey[800],
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 2),
-                Text(
-                  item.UnitOfMeasure,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // BATCH column - flex: 1
-          Expanded(
-            child: Center(
-              child: Text(
-                (item.BatchNo == null || item.BatchNo!.isEmpty || item.BatchNo == 'N/A')
-                    ? 'N/A'
-                    : item.BatchNo!,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: (item.BatchNo == null || item.BatchNo!.isEmpty || item.BatchNo == 'N/A')
-                      ? Colors.grey[400]
-                      : Colors.grey[800],
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          
-          // EXPIRY column - flex: 1
-          Expanded(
-            child: Center(
+    return InkWell(
+      onTap: () => _showItemDetailsDialog(item),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        margin: EdgeInsets.only(bottom: 8),
+        child: Row(
+          children: [
+            // PRODUCT column - flex: 3 (3x wider than others)
+            Expanded(
+              flex: 3,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    (item.DateExpire.isEmpty || item.DateExpire == 'N/A')
-                        ? 'N/A'
-                        : item.DateExpire,
+                    item.ItemCode,
                     style: TextStyle(
-                      fontSize: 12,
-                      color: (item.DateExpire.isEmpty || item.DateExpire == 'N/A')
-                          ? Colors.grey[400]
-                          : Colors.grey[800],
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: Colors.grey[800],
                     ),
-                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (item.DateExpire2 != null && 
-                      item.DateExpire2!.isNotEmpty && 
-                      item.DateExpire2 != 'N/A')
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2.0),
-                      child: Text(
-                        item.DateExpire2!,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey[500],
-                          fontWeight: FontWeight.w400,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  SizedBox(height: 2),
+                  Text(
+                    item.UnitOfMeasure,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                  ),
                 ],
               ),
             ),
-          ),
-          
-          // PREPARED column - flex: 1
-          Expanded(
-            child: Center(
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 4),
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                decoration: BoxDecoration(
-                  color: item.PreparedQuantity > 0
-                      ? Color(0xFF10B981).withOpacity(0.15)
-                      : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: item.PreparedQuantity > 0
-                        ? Color(0xFF059669).withOpacity(0.3)
-                        : Colors.grey[300]!,
-                    width: 1,
-                  ),
-                ),
+
+            // BATCH column - flex: 1
+            Expanded(
+              child: Center(
                 child: Text(
-                  '${item.PreparedQuantity}',
+                  (item.BatchNo == null ||
+                          item.BatchNo!.isEmpty ||
+                          item.BatchNo == 'N/A')
+                      ? 'N/A'
+                      : item.BatchNo!,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    color:
+                        (item.BatchNo == null ||
+                            item.BatchNo!.isEmpty ||
+                            item.BatchNo == 'N/A')
+                        ? Colors.grey[400]
+                        : Colors.grey[800],
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+
+            // EXPIRY column - flex: 1
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      (item.DateExpire.isEmpty || item.DateExpire == 'N/A')
+                          ? 'N/A'
+                          : item.DateExpire,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            (item.DateExpire.isEmpty ||
+                                item.DateExpire == 'N/A')
+                            ? Colors.grey[400]
+                            : Colors.grey[800],
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (item.DateExpire2 != null &&
+                        item.DateExpire2!.isNotEmpty &&
+                        item.DateExpire2 != 'N/A')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2.0),
+                        child: Text(
+                          item.DateExpire2!,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            // PREPARED column - flex: 1
+            Expanded(
+              child: Center(
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
                     color: item.PreparedQuantity > 0
-                        ? Color(0xFF059669)
-                        : Colors.grey[500],
+                        ? Color(0xFF10B981).withOpacity(0.15)
+                        : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: item.PreparedQuantity > 0
+                          ? Color(0xFF059669).withOpacity(0.3)
+                          : Colors.grey[300]!,
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    '${item.PreparedQuantity}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: item.PreparedQuantity > 0
+                          ? Color(0xFF059669)
+                          : Colors.grey[500],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+
+            // ORDERED column - flex: 1
+            Expanded(
+              child: Center(
+                child: Text(
+                  '${item.Quantity}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[700],
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
             ),
-          ),
-          
-          // ORDERED column - flex: 1
-          Expanded(
-            child: Center(
-              child: Text(
-                '${item.Quantity}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildStatusChip(String status, IconData icon, Color color) {
     return ActionChip(
@@ -1380,6 +1384,7 @@ Container(
                           ),
                         ),
                         SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
@@ -1437,6 +1442,8 @@ Container(
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xFFDC2626),
+                              foregroundColor:
+                                  Colors.white, // Add this line for white text
                               padding: EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -1816,137 +1823,137 @@ Container(
   }
 
   Future<void> printSalesOrderTemplateESCUtils(salesorder booking) async {
-  final messenger = ScaffoldMessenger.of(context);
-  final profile = await CapabilityProfile.load();
-  final generator = Generator(PaperSize.mm58, profile);
-  final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
+    final messenger = ScaffoldMessenger.of(context);
+    final profile = await CapabilityProfile.load();
+    final generator = Generator(PaperSize.mm58, profile);
+    final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
 
-  List<int> bytes = [];
+    List<int> bytes = [];
 
-  // --- Header ---
-  bytes += generator.text(
-    booking.ClinicName,
-    styles: PosStyles(
-      align: PosAlign.center,
-      height: PosTextSize.size2,
-      width: PosTextSize.size2,
-      bold: true,
-    ),
-  );
+    // --- Header ---
+    bytes += generator.text(
+      booking.ClinicName,
+      styles: PosStyles(
+        align: PosAlign.center,
+        height: PosTextSize.size2,
+        width: PosTextSize.size2,
+        bold: true,
+      ),
+    );
 
-  bytes += generator.text('Order No : ${booking.Sono}');
-  bytes += generator.text('Area     : ${booking.AreaName}');
-  bytes += generator.text(
-    'Date     : ${dateFormat.format(booking.DateOrder ?? DateTime.now())}',
-  );
-  
-  // URL decode the remarks to handle %20, %26, etc.
-  if (booking.Remarks.isNotEmpty) {
-    String decodedRemarks = Uri.decodeComponent(booking.Remarks);
-    bytes += generator.text('Remarks  : $decodedRemarks');
-  }
+    bytes += generator.text('Order No : ${booking.Sono}');
+    bytes += generator.text('Area     : ${booking.AreaName}');
+    bytes += generator.text(
+      'Date     : ${dateFormat.format(booking.DateOrder ?? DateTime.now())}',
+    );
 
-  bytes += generator.hr(); // horizontal line
-
-  // --- Items (small font) ---
-  bytes += generator.row([
-    PosColumn(text: 'Item', width: 7),
-    PosColumn(text: 'Qty', width: 2, styles: PosStyles(bold: false)),
-    PosColumn(text: 'Exp', width: 3),
-  ]);
-  const int itemWidth = 20; // max characters for Item column
-
-  for (var item in booking.items) {
-    String itemName = '${item.ItemCode} (${item.UnitOfMeasure})';
-    String qty = item.PreparedQuantity.toString();
-    String exp = item.DateExpire;
-
-    // Split item name into chunks of itemWidth
-    List<String> lines = [];
-    for (int i = 0; i < itemName.length; i += itemWidth) {
-      int end = (i + itemWidth < itemName.length)
-          ? i + itemWidth
-          : itemName.length;
-      lines.add(itemName.substring(i, end));
+    // URL decode the remarks to handle %20, %26, etc.
+    if (booking.Remarks.isNotEmpty) {
+      String decodedRemarks = Uri.decodeComponent(booking.Remarks);
+      bytes += generator.text('Remarks  : $decodedRemarks');
     }
 
-    // Print first line with Qty and Exp
-    bytes += generator.row([
-      PosColumn(
-        text: lines[0],
-        width: 7,
-        styles: PosStyles(
-          height: PosTextSize.size1,
-          width: PosTextSize.size1,
-        ),
-      ),
-      PosColumn(
-        text: qty,
-        width: 2,
-        styles: PosStyles(
-          height: PosTextSize.size1,
-          width: PosTextSize.size1,
-        ),
-      ),
-      PosColumn(
-        text: exp,
-        width: 3,
-        styles: PosStyles(
-          height: PosTextSize.size1,
-          width: PosTextSize.size1,
-        ),
-      ),
-    ]);
+    bytes += generator.hr(); // horizontal line
 
-    // Print remaining lines (if any) without Qty/Exp
-    for (int j = 1; j < lines.length; j++) {
+    // --- Items (small font) ---
+    bytes += generator.row([
+      PosColumn(text: 'Item', width: 7),
+      PosColumn(text: 'Qty', width: 3, styles: PosStyles(bold: false)),
+      PosColumn(text: 'Exp', width: 4),
+    ]);
+    const int itemWidth = 15; // max characters for Item column
+
+    for (var item in booking.items) {
+      String itemName = '${item.ItemCode} (${item.UnitOfMeasure})';
+      String qty = item.PreparedQuantity.toString();
+      String exp = item.DateExpire;
+
+      // Split item name into chunks of itemWidth
+      List<String> lines = [];
+      for (int i = 0; i < itemName.length; i += itemWidth) {
+        int end = (i + itemWidth < itemName.length)
+            ? i + itemWidth
+            : itemName.length;
+        lines.add(itemName.substring(i, end));
+      }
+
+      // Print first line with Qty and Exp
       bytes += generator.row([
         PosColumn(
-          text: lines[j],
-          width: 6,
+          text: lines[0],
+          width: 7,
           styles: PosStyles(
             height: PosTextSize.size1,
             width: PosTextSize.size1,
           ),
         ),
-        PosColumn(text: '', width: 2),
-        PosColumn(text: '', width: 4),
+        PosColumn(
+          text: qty,
+          width: 2,
+          styles: PosStyles(
+            height: PosTextSize.size1,
+            width: PosTextSize.size1,
+          ),
+        ),
+        PosColumn(
+          text: exp,
+          width: 3,
+          styles: PosStyles(
+            height: PosTextSize.size1,
+            width: PosTextSize.size1,
+          ),
+        ),
       ]);
+
+      // Print remaining lines (if any) without Qty/Exp
+      for (int j = 1; j < lines.length; j++) {
+        bytes += generator.row([
+          PosColumn(
+            text: lines[j],
+            width: 6,
+            styles: PosStyles(
+              height: PosTextSize.size1,
+              width: PosTextSize.size1,
+            ),
+          ),
+          PosColumn(text: '', width: 2),
+          PosColumn(text: '', width: 4),
+        ]);
+      }
+    }
+
+    bytes += generator.hr();
+
+    // --- Footer ---
+    bytes += generator.text(
+      'THANK YOU!',
+      styles: PosStyles(align: PosAlign.center, bold: true),
+    );
+
+    bytes += generator.feed(2); // feed 2 lines
+    bytes += generator.cut(); // cut paper
+
+    // --- Send bytes to your Bluetooth printer ---
+    bool success = await PrinterHelper.printBytes(Uint8List.fromList(bytes));
+
+    if (success) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Printed successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to print. Check printer.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
-
-  bytes += generator.hr();
-
-  // --- Footer ---
-  bytes += generator.text(
-    'THANK YOU!',
-    styles: PosStyles(align: PosAlign.center, bold: true),
-  );
-
-  bytes += generator.feed(2); // feed 2 lines
-  bytes += generator.cut(); // cut paper
-
-  // --- Send bytes to your Bluetooth printer ---
-  bool success = await PrinterHelper.printBytes(Uint8List.fromList(bytes));
-
-  if (success) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('Printed successfully!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  } else {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('Failed to print. Check printer.'),
-        backgroundColor: Colors.red,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-}
 }
 
 String safeDecode(String? input) {
