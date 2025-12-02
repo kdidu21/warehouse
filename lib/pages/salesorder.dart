@@ -707,7 +707,7 @@ class _OrderCardState extends State<_OrderCard> {
             widget.booking.Sono,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 12,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
             ),
