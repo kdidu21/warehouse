@@ -1029,7 +1029,7 @@ Container(
     Color color,
     VoidCallback onPressed,
   ) {
-    return Container(
+    return SizedBox(
       width: 100,
       child: ElevatedButton.icon(
         onPressed: onPressed,
@@ -1816,133 +1816,135 @@ Container(
   }
 
   Future<void> printSalesOrderTemplateESCUtils(salesorder booking) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final profile = await CapabilityProfile.load();
-    final generator = Generator(PaperSize.mm58, profile);
-    final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
+  final messenger = ScaffoldMessenger.of(context);
+  final profile = await CapabilityProfile.load();
+  final generator = Generator(PaperSize.mm58, profile);
+  final DateFormat dateFormat = DateFormat('MMM dd, yyyy');
 
-    List<int> bytes = [];
+  List<int> bytes = [];
 
-    // --- Header ---
-    bytes += generator.text(
-      booking.ClinicName,
-      styles: PosStyles(
-        align: PosAlign.center,
-        height: PosTextSize.size2,
-        width: PosTextSize.size2,
-        bold: true,
-      ),
-    );
+  // --- Header ---
+  bytes += generator.text(
+    booking.ClinicName,
+    styles: PosStyles(
+      align: PosAlign.center,
+      height: PosTextSize.size2,
+      width: PosTextSize.size2,
+      bold: true,
+    ),
+  );
 
-    bytes += generator.text('Order No : ${booking.Sono}');
-    bytes += generator.text('Area     : ${booking.AreaName}');
-    bytes += generator.text(
-      'Date     : ${dateFormat.format(booking.DateOrder ?? DateTime.now())}',
-    );
-    if (booking.Remarks.isNotEmpty) {
-      bytes += generator.text('Remarks  : ${booking.Remarks}');
+  bytes += generator.text('Order No : ${booking.Sono}');
+  bytes += generator.text('Area     : ${booking.AreaName}');
+  bytes += generator.text(
+    'Date     : ${dateFormat.format(booking.DateOrder ?? DateTime.now())}',
+  );
+  
+  // URL decode the remarks to handle %20, %26, etc.
+  if (booking.Remarks.isNotEmpty) {
+    String decodedRemarks = Uri.decodeComponent(booking.Remarks);
+    bytes += generator.text('Remarks  : $decodedRemarks');
+  }
+
+  bytes += generator.hr(); // horizontal line
+
+  // --- Items (small font) ---
+  bytes += generator.row([
+    PosColumn(text: 'Item', width: 7),
+    PosColumn(text: 'Qty', width: 2, styles: PosStyles(bold: false)),
+    PosColumn(text: 'Exp', width: 3),
+  ]);
+  const int itemWidth = 20; // max characters for Item column
+
+  for (var item in booking.items) {
+    String itemName = '${item.ItemCode} (${item.UnitOfMeasure})';
+    String qty = item.PreparedQuantity.toString();
+    String exp = item.DateExpire;
+
+    // Split item name into chunks of itemWidth
+    List<String> lines = [];
+    for (int i = 0; i < itemName.length; i += itemWidth) {
+      int end = (i + itemWidth < itemName.length)
+          ? i + itemWidth
+          : itemName.length;
+      lines.add(itemName.substring(i, end));
     }
 
-    bytes += generator.hr(); // horizontal line
-
-    // --- Items (small font) ---
+    // Print first line with Qty and Exp
     bytes += generator.row([
-      PosColumn(text: 'Item', width: 7),
-      PosColumn(text: 'Qty', width: 2, styles: PosStyles(bold: false)),
-      PosColumn(text: 'Exp', width: 3),
+      PosColumn(
+        text: lines[0],
+        width: 7,
+        styles: PosStyles(
+          height: PosTextSize.size1,
+          width: PosTextSize.size1,
+        ),
+      ),
+      PosColumn(
+        text: qty,
+        width: 2,
+        styles: PosStyles(
+          height: PosTextSize.size1,
+          width: PosTextSize.size1,
+        ),
+      ),
+      PosColumn(
+        text: exp,
+        width: 3,
+        styles: PosStyles(
+          height: PosTextSize.size1,
+          width: PosTextSize.size1,
+        ),
+      ),
     ]);
-    const int itemWidth = 17; // max characters for Item column
 
-    for (var item in booking.items) {
-      String itemName = '${item.ItemCode} (${item.UnitOfMeasure})';
-      String qty = item.Quantity.toString();
-      String exp = item.DateExpire;
-
-      // Split item name into chunks of itemWidth
-      List<String> lines = [];
-      for (int i = 0; i < itemName.length; i += itemWidth) {
-        int end = (i + itemWidth < itemName.length)
-            ? i + itemWidth
-            : itemName.length;
-        lines.add(itemName.substring(i, end));
-      }
-
-      // Print first line with Qty and Exp
+    // Print remaining lines (if any) without Qty/Exp
+    for (int j = 1; j < lines.length; j++) {
       bytes += generator.row([
         PosColumn(
-          text: lines[0],
-          width: 7,
+          text: lines[j],
+          width: 6,
           styles: PosStyles(
             height: PosTextSize.size1,
             width: PosTextSize.size1,
           ),
         ),
-        PosColumn(
-          text: qty,
-          width: 2,
-          styles: PosStyles(
-            height: PosTextSize.size1,
-            width: PosTextSize.size1,
-          ),
-        ),
-        PosColumn(
-          text: exp,
-          width: 3,
-          styles: PosStyles(
-            height: PosTextSize.size1,
-            width: PosTextSize.size1,
-          ),
-        ),
+        PosColumn(text: '', width: 2),
+        PosColumn(text: '', width: 4),
       ]);
-
-      // Print remaining lines (if any) without Qty/Exp
-      for (int j = 1; j < lines.length; j++) {
-        bytes += generator.row([
-          PosColumn(
-            text: lines[j],
-            width: 6,
-            styles: PosStyles(
-              height: PosTextSize.size1,
-              width: PosTextSize.size1,
-            ),
-          ),
-          PosColumn(text: '', width: 2),
-          PosColumn(text: '', width: 4),
-        ]);
-      }
     }
+  }
 
-    bytes += generator.hr();
+  bytes += generator.hr();
 
-    // --- Footer ---
-    bytes += generator.text(
-      'THANK YOU!',
-      styles: PosStyles(align: PosAlign.center, bold: true),
+  // --- Footer ---
+  bytes += generator.text(
+    'THANK YOU!',
+    styles: PosStyles(align: PosAlign.center, bold: true),
+  );
+
+  bytes += generator.feed(2); // feed 2 lines
+  bytes += generator.cut(); // cut paper
+
+  // --- Send bytes to your Bluetooth printer ---
+  bool success = await PrinterHelper.printBytes(Uint8List.fromList(bytes));
+
+  if (success) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Printed successfully!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
     );
-
-    bytes += generator.feed(2); // feed 2 lines
-    bytes += generator.cut(); // cut paper
-
-    // --- Send bytes to your Bluetooth printer ---
-    bool success = await PrinterHelper.printBytes(Uint8List.fromList(bytes));
-
-    if (success) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Printed successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Failed to print. Check printer.'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+  } else {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Failed to print. Check printer.'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 }
 
