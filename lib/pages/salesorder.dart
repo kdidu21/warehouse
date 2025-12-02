@@ -116,7 +116,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
               right: 20,
             ),
             decoration: BoxDecoration(
-              color: Color(0xFFDC2626),
+              color: Color(0xFF4682B4),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(2),
                 bottomRight: Radius.circular(2),
@@ -180,7 +180,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
                                     SizedBox(width: 8),
                                     Text(
                                       'Clinic Name (A–Z)',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(color: Colors.blueAccent),
                                     ),
                                   ],
                                 ),
@@ -202,7 +202,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
                                     SizedBox(width: 8),
                                     Text(
                                       'Clinic Name (Z–A)',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(color: Colors.blueAccent),
                                     ),
                                   ],
                                 ),
@@ -224,7 +224,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
                                     SizedBox(width: 8),
                                     Text(
                                       'Date (Newest First)',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(color: Colors.blueAccent),
                                     ),
                                   ],
                                 ),
@@ -246,7 +246,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
                                     SizedBox(width: 8),
                                     Text(
                                       'Date (Oldest First)',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(color: Colors.blueAccent),
                                     ),
                                   ],
                                 ),
@@ -268,7 +268,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
                                     SizedBox(width: 8),
                                     Text(
                                       'Area (A–Z)',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(color: Colors.blueAccent),
                                     ),
                                   ],
                                 ),
@@ -323,7 +323,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
             width: 60,
             height: 60,
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDC2626)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4682B4)),
               strokeWidth: 4,
             ),
           ),
@@ -361,7 +361,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
             child: Icon(
               Icons.inventory_2_outlined,
               size: 50,
-              color: Color(0xFFDC2626),
+              color: Color(0xFF4682B4),
             ),
           ),
           SizedBox(height: 24),
@@ -385,7 +385,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
             icon: Icon(Icons.refresh_rounded),
             label: Text('Refresh'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFDC2626),
+              backgroundColor: Color(0xFF4682B4),
               foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -401,7 +401,7 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
   Widget _buildOrdersList() {
     return RefreshIndicator(
       onRefresh: _fetchData,
-      color: Color(0xFFDC2626),
+      color: Color(0xFF4682B4),
       backgroundColor: Colors.white,
       child: ListView.builder(
         controller: _scrollController,
@@ -468,7 +468,7 @@ class _OrderCardState extends State<_OrderCard> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+                    colors: [Color(0xFF4682B4), Color(0xFF6C8FB4)],
                   ),
                 ),
                 child: Column(
@@ -539,7 +539,7 @@ class _OrderCardState extends State<_OrderCard> {
                           color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Row(
+                        child: Row( 
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
@@ -597,7 +597,7 @@ class _OrderCardState extends State<_OrderCard> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Color(0xFFDC2626),
+                          color: Color(0xFF4682B4),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -671,7 +671,7 @@ class _OrderCardState extends State<_OrderCard> {
                         _buildActionButton(
                           'Print',
                           Icons.print_rounded,
-                          Color(0xFFDC2626),
+                          Color(0xFF4682B4),
                           () => _printOrder(booking),
                         ),
                         SizedBox(height: 8),
@@ -1230,7 +1230,7 @@ class _OrderCardState extends State<_OrderCard> {
                                         Navigator.pop(context);
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color(0xFFDC2626),
+                                        backgroundColor: Color(0xFF4682B4),
                                         foregroundColor:
                                             Colors.white, // Add this line
                                         padding: EdgeInsets.symmetric(
@@ -1273,7 +1273,7 @@ class _OrderCardState extends State<_OrderCard> {
                           ),
                           child: Icon(
                             Icons.inventory_2_rounded,
-                            color: Color(0xFFDC2626),
+                            color: Color(0xFF4682B4),
                           ),
                         ),
                         SizedBox(width: 12),
@@ -1443,7 +1443,7 @@ class _OrderCardState extends State<_OrderCard> {
                               parentSetState(() {});
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFFDC2626),
+                              backgroundColor: Color(0xFF4682B4),
                               foregroundColor:
                                   Colors.white, // Add this line for white text
                               padding: EdgeInsets.symmetric(vertical: 14),
@@ -1493,7 +1493,7 @@ class _OrderCardState extends State<_OrderCard> {
                       child: Icon(
                         Icons.person_rounded,
                         size: 30,
-                        color: Color(0xFFDC2626),
+                        color: Color(0xFF4682B4),
                       ),
                     ),
                     SizedBox(height: 16),
@@ -1581,7 +1581,7 @@ class _OrderCardState extends State<_OrderCard> {
                                             content: Text(
                                               'Failed to submit order. Please try again.',
                                             ),
-                                            backgroundColor: Colors.red,
+                                            backgroundColor: Colors.blueAccent,
                                           ),
                                         );
                                       }
@@ -1589,7 +1589,7 @@ class _OrderCardState extends State<_OrderCard> {
                                       messenger.showSnackBar(
                                         SnackBar(
                                           content: Text('Error: $e'),
-                                          backgroundColor: Colors.red,
+                                          backgroundColor: Colors.blueAccent,
                                         ),
                                       );
                                     }
@@ -1633,7 +1633,7 @@ class _OrderCardState extends State<_OrderCard> {
         onChanged: (value) {
           setDialogState(value); // ✅ Call the callback with the new value
         },
-        activeColor: Color(0xFFDC2626),
+        activeColor: Color(0xFF4682B4),
       ),
     );
   }
@@ -1757,7 +1757,7 @@ class _OrderCardState extends State<_OrderCard> {
                                             content: Text(
                                               'Failed to update status. Please try again.',
                                             ),
-                                            backgroundColor: Colors.red,
+                                            backgroundColor: Colors.blueAccent,
                                           ),
                                         );
                                       }
@@ -1765,7 +1765,7 @@ class _OrderCardState extends State<_OrderCard> {
                                       messenger.showSnackBar(
                                         SnackBar(
                                           content: Text('Error: $e'),
-                                          backgroundColor: Colors.red,
+                                          backgroundColor: Colors.blueAccent,
                                         ),
                                       );
                                     }
@@ -1798,7 +1798,7 @@ class _OrderCardState extends State<_OrderCard> {
       case 'Out of Stocks':
         return Color(0xFFEF4444);
       default:
-        return Color(0xFFDC2626);
+        return Color(0xFF4682B4);
     }
   }
 
@@ -1824,7 +1824,7 @@ class _OrderCardState extends State<_OrderCard> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Printing failed: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.blueAccent,
         ),
       );
     }
@@ -1956,7 +1956,7 @@ class _OrderCardState extends State<_OrderCard> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Failed to print. Check printer.'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.blueAccent,
           duration: Duration(seconds: 2),
         ),
       );
