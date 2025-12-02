@@ -536,7 +536,7 @@ class _OrderCardState extends State<_OrderCard> {
                       Container(
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -545,14 +545,14 @@ class _OrderCardState extends State<_OrderCard> {
                             Icon(
                               Icons.comment_rounded,
                               size: 14,
-                              color: Colors.white.withOpacity(0.8),
+                              color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.8),
                             ),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 safeDecode(booking.Remarks),
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.9),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w400,
                                 ),
@@ -1231,6 +1231,8 @@ class _OrderCardState extends State<_OrderCard> {
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Color(0xFFDC2626),
+                                        foregroundColor:
+                                            Colors.white, // Add this line
                                         padding: EdgeInsets.symmetric(
                                           vertical: 12,
                                         ),
@@ -1500,6 +1502,7 @@ class _OrderCardState extends State<_OrderCard> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
+                        color: Colors.grey[800],
                       ),
                     ),
                     SizedBox(height: 8),
@@ -1595,7 +1598,12 @@ class _OrderCardState extends State<_OrderCard> {
                               backgroundColor: Color(0xFF059669),
                               padding: EdgeInsets.symmetric(vertical: 14),
                             ),
-                            child: Text('Submit Order'),
+                            child: Text(
+                              'Submit Order',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ), // Force white text
+                            ),
                           ),
                         ),
                       ],
@@ -1858,8 +1866,8 @@ class _OrderCardState extends State<_OrderCard> {
     // --- Items (small font) ---
     bytes += generator.row([
       PosColumn(text: 'Item', width: 7),
-      PosColumn(text: 'Qty', width: 3, styles: PosStyles(bold: false)),
-      PosColumn(text: 'Exp', width: 4),
+      PosColumn(text: 'Qty', width: 2, styles: PosStyles(bold: false)),
+      PosColumn(text: 'Exp', width: 3),
     ]);
     const int itemWidth = 15; // max characters for Item column
 
