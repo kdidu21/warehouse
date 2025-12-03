@@ -832,7 +832,7 @@ class _OrderCardState extends State<_OrderCard> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: const Color.fromARGB(255, 70, 130, 180),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey[300]!),
             ),
@@ -844,7 +844,7 @@ class _OrderCardState extends State<_OrderCard> {
                     'PRODUCT',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[600],
+                      color: const Color.fromARGB(255, 255, 255, 255),
                       fontSize: 12,
                       letterSpacing: 0.5,
                     ),
@@ -855,7 +855,7 @@ class _OrderCardState extends State<_OrderCard> {
                     'ORDERED',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[600],
+                      color: const Color.fromARGB(255, 255, 255, 255),
                       fontSize: 12,
                       letterSpacing: 0.5,
                     ),
@@ -867,7 +867,7 @@ class _OrderCardState extends State<_OrderCard> {
                     'BATCH',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[600],
+                      color: const Color.fromARGB(255, 255, 255, 255),
                       fontSize: 12,
                       letterSpacing: 0.5,
                     ),
@@ -879,7 +879,7 @@ class _OrderCardState extends State<_OrderCard> {
                     'EXPIRY',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[600],
+                      color: const Color.fromARGB(255, 255, 255, 255),
                       fontSize: 12,
                       letterSpacing: 0.5,
                     ),
@@ -891,7 +891,7 @@ class _OrderCardState extends State<_OrderCard> {
                     'PREPARED',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[600],
+                      color: const Color.fromARGB(255, 255, 255, 255),
                       fontSize: 12,
                       letterSpacing: 0.5,
                     ),
