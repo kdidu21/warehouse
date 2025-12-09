@@ -77,11 +77,15 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
 
       
       for (var booking in newData) {
-        final currentJson = _bookingToJson(booking);
-        if (!_bookingStates.containsKey(booking.Sono) ||
-            _bookingStates[booking.Sono] != currentJson) {
+        //final currentJson = _bookingToJson(booking);
+        // if (!_bookingStates.containsKey(booking.Sono) ||
+        //     _bookingStates[booking.Sono] != currentJson) {
+        //   hasChange = true;
+        //   _bookingStates[booking.Sono] = currentJson;
+        // }
+        if (!_bookingStates.containsKey(booking.Sono)) {    ////Added 12/04/2025 11:36am
           hasChange = true;
-          _bookingStates[booking.Sono] = currentJson;
+          _bookingStates[booking.Sono] = booking.Sono;
         }
       }
 
@@ -93,8 +97,9 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
         });
 
         // Play sound whenever there's any change (new or updated)
-        if (hasChange ) {
+        if (hasChange && !_loading) {
           _playNotificationSound();
+          hasChange = false;
         }
       } else if (_loading) {
         setState(() => _loading = false);
@@ -1505,16 +1510,24 @@ class _OrderCardState extends State<_OrderCard> {
                                 return;
                               }
 
-                              item.BatchNo = batchNo;
-                              item.PreparedQuantity = qty;
-                              item.DateExpire =
-                                  '${exp1!.year}-${exp1!.month.toString().padLeft(2, '0')}';
-                              item.DateExpire2 = exp2 == null
-                                  ? ''
-                                  : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}';
+                              // item.BatchNo = batchNo;      /////// remove due to improper state update
+                              // item.PreparedQuantity = qty;
+                              // item.DateExpire =
+                              //     '${exp1!.year}-${exp1!.month.toString().padLeft(2, '0')}';
+                              // item.DateExpire2 = exp2 == null
+                              //     ? ''
+                              //     : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}';
 
                               Navigator.pop(context);
-                              parentSetState(() {});
+                              parentSetState(() {     ////added 12/04/2025 11:40am
+                                item.BatchNo = batchNo;
+                                item.PreparedQuantity = qty;
+                                item.DateExpire =
+                                    '${exp1!.year}-${exp1!.month.toString().padLeft(2, '0')}';
+                                item.DateExpire2 = exp2 == null
+                                    ? ''
+                                    : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}';
+                              });
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xFF4682B4),
@@ -1711,6 +1724,25 @@ class _OrderCardState extends State<_OrderCard> {
       ),
     );
   }
+
+  String wrap58(String text,{int maxChars=32}) {
+    final words = text.split(' ');
+    List<String> lines = [];
+    String currentLine = '';
+    for (var word in words) {
+      if ((currentLine + word).length <= maxChars) {
+        currentLine += (currentLine.isEmpty ? '' : ' ') + word;
+      } else {
+        lines.add(currentLine.trim());
+        currentLine = '$word ';
+
+      }
+    }
+    if (currentLine.isNotEmpty) {
+      lines.add(currentLine);
+    }
+    return lines.join('\n');
+  } 
 
   void _showPreparedByDialog(
     BuildContext context,
@@ -1912,18 +1944,21 @@ class _OrderCardState extends State<_OrderCard> {
 
     List<int> bytes = [];
 
-    bytes += generator.feed(5); // feed 5 lines
-
+    bytes += generator.feed(7); // feed 5 lines
+    final wrappedHeader = wrap58(booking.ClinicName,maxChars: 16);
+    for(var line in wrappedHeader.split('\n')){
+      bytes += generator.text(
+        line,
+        styles: PosStyles(
+          align: PosAlign.center,
+          height: PosTextSize.size2,
+          width: PosTextSize.size2,
+          bold: true,
+        ),
+      );
+    }
     // --- Header ---
-    bytes += generator.text(
-      booking.ClinicName,
-      styles: PosStyles(
-        align: PosAlign.center,
-        height: PosTextSize.size1,
-        width: PosTextSize.size1,
-        bold: true,
-      ),
-    );
+    
 
     bytes += generator.text('Order No : ${booking.Sono}');
     bytes += generator.text('Area     : ${booking.AreaName}');
