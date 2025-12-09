@@ -2,30 +2,33 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/salesordermodel.dart';
 
-class SalesOrderService {
+class ItemPreparationService {
   static const String baseUrl =
       'http://shopapi.vaxilifecorp.com/api/appsales/0';
 
-  static Future<bool> submitSalesOrder( 
+  static Future<bool> submitForPreparation(
     salesorder order,
-    String selectedWarehouseman,
+    [String selectedWarehouseman = '']
   ) async {
     try {
       final List<Map<String, dynamic>> itemsList = [];
       
       for (var item in order.items) {
-        item.WarehouseMan = selectedWarehouseman;
-        
-        itemsList.add({
+        final Map<String, dynamic> itemData = {
           'id': item.id,
           'ItemCode': item.ItemCode,
           'Quantity': item.PreparedQuantity,
           'DateExpire': item.DateExpire,
           'BatchNo': item.BatchNo ?? '',
-          'WarehouseMan': selectedWarehouseman,
           'SecondExpire': item.DateExpire2 ?? '',
-          'Status': "For Discounting",
-        });
+          'Status': "For Preparation",
+        };
+        
+        if (selectedWarehouseman.isNotEmpty) {
+          itemData['WarehouseMan'] = selectedWarehouseman;
+        }
+        
+        itemsList.add(itemData);
       }
 
       final response = await http.put(
@@ -41,11 +44,11 @@ class SalesOrderService {
       print("Body: ${response.body}");
 
       if (response.statusCode != 200) {
-        print("Failed to submit order");
+        print("Failed to submit order for preparation");
         return false;
       }
 
-      print("All items submitted successfully");
+      print("All items submitted for preparation successfully");
       return true;
     } catch (e) {
       print("Exception: $e");

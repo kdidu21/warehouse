@@ -9,6 +9,7 @@ import 'package:vaxiwarehouse/models/salesordermodel.dart';
 import 'package:vaxiwarehouse/utils/getData.dart';
 import 'package:vaxiwarehouse/utils/printhelper.dart';
 import 'package:vaxiwarehouse/services/sales_order_service.dart';
+import 'package:vaxiwarehouse/services/save_item_details.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 class ClinicBookingsPage extends StatefulWidget {
@@ -73,9 +74,8 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
   Future<void> _fetchData() async {
     try {
       final newData = await fetchClinicBookings();
-      bool hasChange= false;
+      bool hasChange = false;
 
-      
       for (var booking in newData) {
         //final currentJson = _bookingToJson(booking);
         // if (!_bookingStates.containsKey(booking.Sono) ||
@@ -83,7 +83,8 @@ class _ClinicBookingsPageState extends State<ClinicBookingsPage> {
         //   hasChange = true;
         //   _bookingStates[booking.Sono] = currentJson;
         // }
-        if (!_bookingStates.containsKey(booking.Sono)) {    ////Added 12/04/2025 11:36am
+        if (!_bookingStates.containsKey(booking.Sono)) {
+          ////Added 12/04/2025 11:36am
           hasChange = true;
           _bookingStates[booking.Sono] = booking.Sono;
         }
@@ -491,6 +492,132 @@ class _OrderCard extends StatefulWidget {
 
 class _OrderCardState extends State<_OrderCard> {
   bool _expanded = false;
+
+  Future<String?> _showWarehousePersonDialog(BuildContext context) async {
+    String? selectedPerson;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Icon(
+                        Icons.person_rounded,
+                        size: 30,
+                        color: Color(0xFF4682B4),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Who prepared this item?',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    Column(
+                      children: [
+                        _buildPersonOptionForDialog('Fe', selectedPerson, (
+                          value,
+                        ) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                        _buildPersonOptionForDialog('Edrin', selectedPerson, (
+                          value,
+                        ) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                        _buildPersonOptionForDialog('Anne', selectedPerson, (
+                          value,
+                        ) {
+                          setDialogState(() {
+                            selectedPerson = value;
+                          });
+                        }),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context, null),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey),
+                            ),
+                            child: Text('Cancel'),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: selectedPerson == null
+                                ? null
+                                : () => Navigator.pop(context, selectedPerson),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF4682B4),
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(
+                              'Continue',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    return result;
+  }
+
+  Widget _buildPersonOptionForDialog(
+    String name,
+    String? selectedPerson,
+    Function(String?) onChanged,
+  ) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: RadioListTile<String>(
+        title: Text(name, style: TextStyle(fontWeight: FontWeight.w500)),
+        value: name,
+        groupValue: selectedPerson,
+        onChanged: onChanged,
+        activeColor: Color(0xFF4682B4),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1454,7 +1581,7 @@ class _OrderCardState extends State<_OrderCard> {
                         SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               final batchNo = batchController.text.trim();
                               final qtyText = qtyController.text.trim();
 
@@ -1469,26 +1596,9 @@ class _OrderCardState extends State<_OrderCard> {
                                 return;
                               }
 
-                              // final qty = int.tryParse(qtyText) ?? 0;
-                              // final maxQty =
-                              //     double.tryParse(item.Quantity.toString()) ??
-                              //     0;
-
-                              // if (qty <= 0 || qty > maxQty) {
-                              //   ScaffoldMessenger.of(context).showSnackBar(
-                              //     SnackBar(
-                              //       content: Text(
-                              //         'Invalid quantity (max $maxQty)',
-                              //       ),
-                              //     ),
-                              //   );
-                              //   return;
-                              // }
-
                               final qty = int.tryParse(qtyText) ?? 0;
 
                               if (qty <= 0) {
-                                // <-- Only check if quantity is positive
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -1510,16 +1620,8 @@ class _OrderCardState extends State<_OrderCard> {
                                 return;
                               }
 
-                              // item.BatchNo = batchNo;      /////// remove due to improper state update
-                              // item.PreparedQuantity = qty;
-                              // item.DateExpire =
-                              //     '${exp1!.year}-${exp1!.month.toString().padLeft(2, '0')}';
-                              // item.DateExpire2 = exp2 == null
-                              //     ? ''
-                              //     : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}';
-
-                              Navigator.pop(context);
-                              parentSetState(() {     ////added 12/04/2025 11:40am
+                              // Update the item locally first
+                              parentSetState(() {
                                 item.BatchNo = batchNo;
                                 item.PreparedQuantity = qty;
                                 item.DateExpire =
@@ -1528,11 +1630,59 @@ class _OrderCardState extends State<_OrderCard> {
                                     ? ''
                                     : '${exp2!.year}-${exp2!.month.toString().padLeft(2, '0')}';
                               });
+
+                              // Create a temporary order with just this item
+                              final tempOrder = salesorder(
+                                Sono: widget.booking.Sono,
+                                ClinicName: widget.booking.ClinicName,
+                                AreaName: widget.booking.AreaName,
+                                DateOrder: widget.booking.DateOrder,
+                                Remarks: widget.booking.Remarks,
+                                items: [item],
+                              );
+
+                              // Submit to API
+                              try {
+                                final success =
+                                    await ItemPreparationService.submitForPreparation(
+                                      tempOrder,
+                                      '', // Empty string for warehouse person
+                                    );
+
+                                if (success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Item details saved successfully!',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  // REMOVED: widget.onRefresh(); // This was causing the card to disappear
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to save item details.',
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error saving item: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+
+                              Navigator.pop(context); // Close the dialog
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Color(0xFF4682B4),
-                              foregroundColor:
-                                  Colors.white, // Add this line for white text
+                              foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -1725,7 +1875,7 @@ class _OrderCardState extends State<_OrderCard> {
     );
   }
 
-  String wrap58(String text,{int maxChars=32}) {
+  String wrap58(String text, {int maxChars = 32}) {
     final words = text.split(' ');
     List<String> lines = [];
     String currentLine = '';
@@ -1735,14 +1885,13 @@ class _OrderCardState extends State<_OrderCard> {
       } else {
         lines.add(currentLine.trim());
         currentLine = '$word ';
-
       }
     }
     if (currentLine.isNotEmpty) {
       lines.add(currentLine);
     }
     return lines.join('\n');
-  } 
+  }
 
   void _showPreparedByDialog(
     BuildContext context,
@@ -1945,8 +2094,8 @@ class _OrderCardState extends State<_OrderCard> {
     List<int> bytes = [];
 
     bytes += generator.feed(7); // feed 5 lines
-    final wrappedHeader = wrap58(booking.ClinicName,maxChars: 16);
-    for(var line in wrappedHeader.split('\n')){
+    final wrappedHeader = wrap58(booking.ClinicName, maxChars: 16);
+    for (var line in wrappedHeader.split('\n')) {
       bytes += generator.text(
         line,
         styles: PosStyles(
@@ -1958,7 +2107,6 @@ class _OrderCardState extends State<_OrderCard> {
       );
     }
     // --- Header ---
-    
 
     bytes += generator.text('Order No : ${booking.Sono}');
     bytes += generator.text('Area     : ${booking.AreaName}');
