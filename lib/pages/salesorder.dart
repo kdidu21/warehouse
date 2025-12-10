@@ -1581,6 +1581,8 @@ class _OrderCardState extends State<_OrderCard> {
                         SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
+                            // Replace the validation section in _showItemDetailsDialog method
+                            // Find this section around line 1090-1110 and replace with:
                             onPressed: () async {
                               final batchNo = batchController.text.trim();
                               final qtyText = qtyController.text.trim();
@@ -1596,13 +1598,14 @@ class _OrderCardState extends State<_OrderCard> {
                                 return;
                               }
 
-                              final qty = int.tryParse(qtyText) ?? 0;
+                              final qty = int.tryParse(qtyText);
 
-                              if (qty <= 0) {
+                              // ✅ Changed: Now accepts 0 or any positive number
+                              if (qty == null || qty < 0) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      'Please enter a valid quantity (greater than 0)',
+                                      'Please enter a valid quantity (0 or greater)',
                                     ),
                                   ),
                                 );
@@ -1658,7 +1661,6 @@ class _OrderCardState extends State<_OrderCard> {
                                       backgroundColor: Colors.green,
                                     ),
                                   );
-                                  // REMOVED: widget.onRefresh(); // This was causing the card to disappear
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
