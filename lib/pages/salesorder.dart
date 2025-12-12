@@ -1129,7 +1129,7 @@ class _OrderCardState extends State<_OrderCard> {
                     Text(
                       (item.DateExpire.isEmpty || item.DateExpire == 'N/A')
                           ? 'N/A'
-                          : item.DateExpire,
+                          : item.DateExpire ,
                       style: TextStyle(
                         fontSize: 12,
                         color:
@@ -1271,7 +1271,7 @@ class _OrderCardState extends State<_OrderCard> {
           try {
             final parts = item.DateExpire.split('-');
             if (parts.length == 2) {
-              exp1 = DateTime(int.parse(parts[0]), int.parse(parts[1]), 1);
+              exp1 = DateTime(int.parse(parts[0]), int.parse(parts[2]), 1);
             }
           } catch (_) {
             print('Error parsing DateExpire: ${item.DateExpire}');

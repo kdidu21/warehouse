@@ -60,7 +60,7 @@ class salesorderdetails {
       if (date == null) return 'N/A';
       try {
         final dt = DateTime.parse(date);
-        return '${dt.year}-${dt.month.toString().padLeft(2, '0')}';
+        return '${dt.year}-${dt.day.toString().padLeft(2, '0')}';
       } catch (_) {
         return 'N/A';
       }
